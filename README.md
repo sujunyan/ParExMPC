@@ -1,6 +1,13 @@
 # ParExMPC Toolbox 
 
-ParExMPC Toolbox a MATLAB base toolkit for parallel explicit MPC. 
+ParExMPC Toolbox a MATLAB base toolkit for linear MPC with state constraints. In particular, we solve the problem of the following form:
+$$
+\text{minimize}\; (x_N - x_{r})^T P (x_N - x_{r}) + 
+    \sum_{k=0}^{N-1} (x_k-x_r)^T Q (x_k-x_r) + (u_k - u_r)^T R (u_k - u_r) \\
+\text{subject to }  x_{k+1} = Ax_k+Bx_k \\
+\qquad y_{min} \leq Cx+Du \leq y_{max} \\
+u_{min} \leq u\leq u_{max}
+$$
 
 ## Getting Started
 
