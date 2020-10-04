@@ -1,6 +1,8 @@
 # ParExMPC Toolbox 
 
 ParExMPC Toolbox a MATLAB base toolkit for linear MPC with state constraints. In particular, we solve the problem of the following form:
+![](https://latex.codecogs.com/png.latex?%5Cbegin%7Balign*%7D%20%5Ctext%7Bminimize%7D%5C%3B%26%20%28x_N%20-%20x_%7Br%7D%29%5ET%20P%20%28x_N%20-%20x_%7Br%7D%29%20&plus;%20%5Csum_%7Bk%3D0%7D%5E%7BN-1%7D%20%28x_k-x_r%29%5ET%20Q%20%28x_k-x_r%29%20&plus;%20%28u_k%20-%20u_r%29%5ET%20R%20%28u_k%20-%20u_r%29%20%5C%5C%20%5Ctext%7Bsubject%20to%7D%5C%3B%26%20x_%7Bk&plus;1%7D%20%3D%20Ax_k&plus;Bx_k%20%5C%5C%20%26y_%7Bmin%7D%20%5Cleq%20Cx&plus;Du%20%5Cleq%20y_%7Bmax%7D%20%5C%5C%20%26u_%7Bmin%7D%20%5Cleq%20u%5Cleq%20u_%7Bmax%7D%20%5Cend%7Balign*%7D)
+<!---
 $$
 \text{minimize}\; (x_N - x_{r})^T P (x_N - x_{r}) + 
     \sum_{k=0}^{N-1} (x_k-x_r)^T Q (x_k-x_r) + (u_k - u_r)^T R (u_k - u_r) \\
@@ -8,6 +10,7 @@ $$
 \qquad y_{min} \leq Cx+Du \leq y_{max} \\
 u_{min} \leq u\leq u_{max}
 $$
+--->
 
 ## Getting Started
 
