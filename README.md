@@ -2,19 +2,17 @@
 
 ParExMPC Toolbox a MATLAB base toolkit for linear MPC with state constraints. In particular, we solve the problem of the following form:
 
-<img src="http://www.sciweavers.org/tex2img.php?eq=%5Cbegin%7Bequation%2A%7D%0A%5Cbegin%7Barray%7D%7Bll%7D%0A%5Ctext%7Bminimize%7D%5C%3B%26%20%28x_N%20-%20x_%7Br%7D%29%5ET%20P%20%28x_N%20-%20x_%7Br%7D%29%20%2B%20%0A%20%20%20%20%5Csum_%7Bk%3D0%7D%5E%7BN-1%7D%20%28x_k-x_r%29%5ET%20Q%20%28x_k-x_r%29%20%2B%20%28u_k%20-%20u_r%29%5ET%20R%20%28u_k%20-%20u_r%29%20%5C%5C%0A%5Ctext%7Bsubject%20to%7D%5C%3B%26%20%20x_%7Bk%2B1%7D%20%3D%20Ax_k%2BBx_k%20%5C%5C%0A%26y_%7Bmin%7D%20%5Cleq%20Cx%2BDu%20%5Cleq%20y_%7Bmax%7D%20%5C%5C%0A%26u_%7Bmin%7D%20%5Cleq%20u%5Cleq%20u_%7Bmax%7D%0A%5Cend%7Barray%7D%0A%5Cend%7Bequation%2A%7D&bc=White&fc=Black&im=png&fs=12&ff=modern&edit=0" align="center" border="0" alt="\begin{equation*}\begin{array}{ll}\text{minimize}\;& (x_N - x_{r})^T P (x_N - x_{r}) +     \sum_{k=0}^{N-1} (x_k-x_r)^T Q (x_k-x_r) + (u_k - u_r)^T R (u_k - u_r) \\\text{subject to}\;&  x_{k+1} = Ax_k+Bx_k \\&y_{min} \leq Cx+Du \leq y_{max} \\&u_{min} \leq u\leq u_{max}\end{array}\end{equation*}" width="639" height="81" />
+<a href="https://www.codecogs.com/eqnedit.php?latex=\begin{align*}&space;&\text{minimize}\;&&space;(x_N&space;-&space;x_{r})^T&space;P&space;(x_N&space;-&space;x_{r})&&space;&plus;&space;\sum_{k=0}^{N-1}&space;(x_k-x_r)^T&space;Q&space;(x_k-x_r)&space;&plus;&space;(u_k&space;-&space;u_r)^T&space;R&space;(u_k&space;-&space;u_r)&space;\\&space;&\text{subject&space;to}\;&&space;x_{k&plus;1}&space;&=&space;Ax_k&plus;Bx_k&&space;\\&space;&&y_{min}&space;&\leq&space;Cx_k&plus;Du_k&space;\leq&space;y_{max}&space;\\&space;&&u_{min}&space;&\leq&space;u_k\leq&space;u_{max}&space;\end{align*}" target="_blank"><img src="https://latex.codecogs.com/svg.latex?\begin{align*}&space;&\text{minimize}\;&&space;(x_N&space;-&space;x_{r})^T&space;P&space;(x_N&space;-&space;x_{r})&&space;&plus;&space;\sum_{k=0}^{N-1}&space;(x_k-x_r)^T&space;Q&space;(x_k-x_r)&space;&plus;&space;(u_k&space;-&space;u_r)^T&space;R&space;(u_k&space;-&space;u_r)&space;\\&space;&\text{subject&space;to}\;&&space;x_{k&plus;1}&space;&=&space;Ax_k&plus;Bx_k&&space;\\&space;&&y_{min}&space;&\leq&space;Cx_k&plus;Du_k&space;\leq&space;y_{max}&space;\\&space;&&u_{min}&space;&\leq&space;u_k\leq&space;u_{max}&space;\end{align*}" title="\begin{align*} &\text{minimize}\;& (x_N - x_{r})^T P (x_N - x_{r})& + \sum_{k=0}^{N-1} (x_k-x_r)^T Q (x_k-x_r) + (u_k - u_r)^T R (u_k - u_r) \\ &\text{subject to}\;& x_{k+1} &= Ax_k+Bx_k& \\ &&y_{min} &\leq Cx_k+Du_k \leq y_{max} \\ &&u_{min} &\leq u_k\leq u_{max} \end{align*}" /></a>
 
 <!---
 $$
-\begin{equation*}
-\begin{array}{ll}
-\text{minimize}\;& (x_N - x_{r})^T P (x_N - x_{r}) + 
+\begin{align*} 
+&\text{minimize}\;& (x_N - x_{r})^T P (x_N - x_{r})& + 
     \sum_{k=0}^{N-1} (x_k-x_r)^T Q (x_k-x_r) + (u_k - u_r)^T R (u_k - u_r) \\
-\text{subject to}\;&  x_{k+1} = Ax_k+Bx_k \\
-&y_{min} \leq Cx+Du \leq y_{max} \\
-&u_{min} \leq u\leq u_{max}
-\end{array}
-\end{equation*}
+&\text{subject to}\;&  x_{k+1} &= Ax_k+Bx_k& \\
+&&y_{min} &\leq Cx_k+Du_k \leq y_{max} \\
+&&u_{min} &\leq u_k\leq u_{max}
+\end{align*}
 $$
 --->
 
