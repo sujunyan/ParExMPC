@@ -141,60 +141,68 @@ fprintf(fid, '#define %sMPT_NR (%d)\n', prefix, total_nr);
 % write inequality constraints A*x <= b for each polytope
 ctr = 0;
 fprintf(fid, '\nstatic %s %sMPT_A[] = {\n', precision,prefix);
-for ii = 1:total_nr,
-    Ai = An{ii};
-    nc = size(Ai, 1);
-    for jj = 1:nc,
-        a = Ai(jj, :);
-        for kk = 1:length(a),
-            ctr = ctr + 1;
-            if ctr<nctotal*nx,
-                if isequal(precision,'float')
-                    fprintf(fid, '%.7e,\t', a(kk));
-                else
-                    fprintf(fid, '%.14e,\t', a(kk));
-                end
-            else
-                if isequal(precision,'float')
-                    fprintf(fid, '%.7e ', a(kk));
-                else
-                    fprintf(fid, '%.14e ', a(kk));
-                end
-            end
-            if mod(ctr, 5)==0,
-                fprintf(fid, '\n');
-            end
-        end
-    end
-end
-fprintf(fid, '};\n\n');
+writeCellMatrices(An,fid,precision);
+%str_buffer = "";
+%for ii = 1:total_nr,
+%    Ai = An{ii};
+%    nc = size(Ai, 1);
+%    for jj = 1:nc,
+%        a = Ai(jj, :);
+%        for kk = 1:length(a),
+%            ctr = ctr + 1;
+%            if ctr<nctotal*nx,
+%                if isequal(precision,'float')
+%                    str_buffer = str_buffer + sprintf('%.7e,\t',a(kk));
+%                    %fprintf(fid, '%.7e,\t', a(kk));
+%                else
+%                    str_buffer = str_buffer + sprintf('%.14e,\t',a(kk));
+%                    %fprintf(fid, '%.14e,\t', a(kk));
+%                end
+%            else
+%                if isequal(precision,'float')
+%                    str_buffer = str_buffer + sprintf('%.7e ',a(kk));
+%                    %fprintf(fid, '%.7e ', a(kk));
+%                else
+%                    str_buffer = str_buffer + sprintf('%.14e ',a(kk));
+%                    %fprintf(fid, '%.14e ', a(kk));
+%                end
+%            end
+%            if mod(ctr, 5)==0,
+%              %str_buffer = str_buffer + '\n';
+%            end
+%        end
+%    end
+%end
+%str_buffer = str_buffer + '};\n\n';
 
-ctr = 0;
+
+%ctr = 0;
 fprintf(fid, 'static %s %sMPT_B[] = {\n',precision,prefix);
-for ii = 1:total_nr,
-    bi = bn{ii};
-    nc = size(bi, 1);
-    for jj = 1:nc,
-        ctr = ctr + 1;
-        if ctr<nctotal,
-            if isequal(precision,'float')
-                fprintf(fid, '%.7e,\t', bi(jj));
-            else
-                fprintf(fid, '%.14e,\t', bi(jj));
-            end
-        else
-            if isequal(precision,'float')
-                fprintf(fid, '%.7e ', bi(jj));
-            else
-                fprintf(fid, '%.14e ', bi(jj));
-            end
-        end
-        if mod(ctr, 5)==0,
-            fprintf(fid, '\n');
-        end
-    end
-end
-fprintf(fid, '};\n\n');
+writeCellMatrices(bn,fid,precision);
+%for ii = 1:total_nr,
+%    bi = bn{ii};
+%    nc = size(bi, 1);
+%    for jj = 1:nc,
+%        ctr = ctr + 1;
+%        if ctr<nctotal,
+%            if isequal(precision,'float')
+%                fprintf(fid, '%.7e,\t', bi(jj));
+%            else
+%                fprintf(fid, '%.14e,\t', bi(jj));
+%            end
+%        else
+%            if isequal(precision,'float')
+%                fprintf(fid, '%.7e ', bi(jj));
+%            else
+%                fprintf(fid, '%.14e ', bi(jj));
+%            end
+%        end
+%        if mod(ctr, 5)==0,
+%            fprintf(fid, '\n');
+%        end
+%    end
+%end
+%fprintf(fid, '};\n\n');
 
 fprintf(fid, 'static int %sMPT_NC[] = {\n',prefix);
 for ii = 1:total_nr,
@@ -234,37 +242,70 @@ function sub_write_matrix(matrices, name, fid, precision)
 nr = numel(matrices);
 [nu,nx] = size(matrices{1});
 
-
 nctotalh = nu*nx*nr;
 ctr = 0;
-fprintf(fid, '\n');
-fprintf(fid, 'static %s %s[] = {\n', precision, name);
-for ii = 1:nr,
-    M = matrices{ii};
-    for jj = 1:nu,
-        h = M(jj, :);
-        for kk = 1:nx,
-            ctr = ctr + 1;
-            if ctr<nctotalh,
-                if isequal(precision,'float')
-                    fprintf(fid, '%.7e,\t', h(kk));
-                else
-                    fprintf(fid, '%.14e,\t', h(kk));
-                end
-            else
-                if isequal(precision,'float')
-                    fprintf(fid, '%.7e ', h(kk));
-                else
-                    fprintf(fid, '%.14e ', h(kk));
-                end
-            end
-            if mod(ctr, 5)==0,
-                fprintf(fid, '\n');
-            end
-        end
-    end
+%fprintf(fid, '\n');
+fprintf(fid, '\nstatic %s %s[] = {\n', precision, name);
+writeCellMatrices(matrices,fid,precision);
+%An_mat = cell2mat(matrices);
+%An_v = reshape(An_mat',[],1);
+%buf2 = sprintf("%.14e,\t",An_v(1:end-1));
+%buf2 = buf2 + sprintf("%.14e ",An_v(end)) + '};\n\n';
+%fprintf(fid,buf2);
+%for ii = 1:nr,
+%    M = matrices{ii};
+%    for jj = 1:nu,
+%        h = M(jj, :);
+%        for kk = 1:nx,
+%            ctr = ctr + 1;
+%            if ctr<nctotalh,
+%                if isequal(precision,'float')
+%                    str_buffer = str_buffer +  sprintf("%.7e,\t", h(kk));
+%                    %fprintf(fid, '%.7e,\t', h(kk));
+%                else
+%                    str_buffer = str_buffer +  sprintf("%.14e,\t", h(kk));
+%                    %fprintf(fid, '%.14e,\t', h(kk));
+%                end
+%            else
+%                if isequal(precision,'float')
+%                    str_buffer = str_buffer +  sprintf("%.14e ", h(kk));
+%                    %fprintf(fid, '%.7e ', h(kk));
+%                else
+%                    str_buffer = str_buffer +  sprintf("%.14e ", h(kk));
+%                    %fprintf(fid, '%.14e ', h(kk));
+%                end
+%            end
+%            if mod(ctr, 5)==0
+%                %str_buffer = str_buffer + '\n';
+%                %fprintf(fid, '\n');
+%            end
+%        end
+%    end
+%end
+%str_buffer = str_buffer + '};\n\n';
+%fprintf(fid,str_buffer);
 end
-fprintf(fid, '};\n\n');
 
+function writeCellMatrices(matrices,fid,precision)
+  %% write the tailor of a cell to fid 
+  % syntax:
+  %         matrix - a cell array with matrix data
+  %         name - name of the matrix given as string
+  %         fid - file identificator
+  %         precision - either "float" or "double"
 
+  An_mat = cell2mat(matrices);
+  An_v = reshape(An_mat',[],1);
+  if length(An_v) == 1 % there is no colon for single element array
+    buf2 = sprintf("%.7e ",An_v(end)) + '};\n\n';
+  else
+    if isequal(precision,'float')
+      buf2 = sprintf("%.7e,\t",An_v(1:end-1));
+      buf2 = buf2 + sprintf("%.7e ",An_v(end)) + '};\n\n';
+    else
+      buf2 = sprintf("%.14e,\t",An_v(1:end-1));
+      buf2 = buf2 + sprintf("%.14e ",An_v(end)) + '};\n\n';
+    end
+  end
+  fprintf(fid,buf2);
 end

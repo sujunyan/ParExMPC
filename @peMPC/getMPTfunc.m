@@ -12,7 +12,7 @@ function obj = getMPTfunc(obj)
     obj.MPT_inf_bound = max_infbound;
     %fprintf("In getMPTfunc, get max_infbound %e\n",max_infbound);
     mptopt('infbound',max_infbound);
-    mptopt('pqpsolver', 'plcp'); % list of solver: plcp, mpqp, enumplcp, enumpqp, rlenumpqp
+    mptopt('pqpsolver', obj.mptSolver); % list of solver: plcp, mpqp, enumplcp, enumpqp, rlenumpqp
     class_folder = fileparts(mfilename('fullpath'));
     
     tiebreak = 'obj';
@@ -44,7 +44,7 @@ function obj = getMPTfunc(obj)
         
     % for lamN --------------------------------------
 
-    mptopt('pqpsolver', 'enumpqp'); % list of solver: plcp, mpqp, enumplcp, enumpqp, rlenumpqp
+    mptopt('pqpsolver', obj.mptSolver); % list of solver: plcp, mpqp, enumplcp, enumpqp, rlenumpqp
     lamN = sdpvar(obj.nx,1);
     yN = sdpvar(obj.nx,1);
     xiN = sdpvar(obj.nx,1);
@@ -59,11 +59,12 @@ function obj = getMPTfunc(obj)
     constraints = [gs_min<=gs<=gs_max, lbs <= obj.C*xiN <= ubs ];
     problemN = Opt(constraints,objective,gs,xiN);
     %problemN = Opt('H',Hs,'pF',eye(obj.nx),'lb',obj.xmin,'ub',obj.xmax);
+    fprintf("Getting MPT functions for problems N -----------------------------------------------------\n");
     resN = problemN.solve;
     %resN.xopt.toMatlab([func_folder filesep 'MPT_func_N.m'],'primal',tiebreak);
         
     % for lamk -------------------------------------------------------------
-    mptopt('pqpsolver', 'enumpqp'); % list of solver: plcp, mpqp, enumplcp, enumpqp, rlenumpqp
+    mptopt('pqpsolver', obj.mptSolver); % list of solver: plcp, mpqp, enumplcp, enumpqp, rlenumpqp
 
     xik = sdpvar(obj.nx+obj.nu,1);
     Hs = 4*obj.Sigmak;
@@ -79,13 +80,17 @@ function obj = getMPTfunc(obj)
 
     objective = 1/2*xik'*Hs*xik + gs'*xik;
     constraints = [gs_min<= gs<= gs_max, lbAs<= As*xik <=ubAs];
+    %constraints = [lbAs<= As*xik <=ubAs];
     problemk = Opt(constraints,objective,gs,xik);
-
+    fprintf("Getting MPT functions for problems k -----------------------------------------------------\n");
     resk = problemk.solve;
+
+
     fprintf("solve the MPT problem used %f seconds\n",toc(tstart));
     fprintf("Exporing to C code\n");
 
     fprintf("Exporing pre_mpt.h\n");
+    filewrite_t = tic;
     fileID = fopen([class_folder filesep 'c_code' filesep 'pre_mpt.h'],'w+');
     fprintf(fileID,"/*predefined mpt matrices for explict evaluation*/\n");
     fprintf(fileID,"#ifndef __PRE_MPT_H__\n#define __PRE_MPT_H__\n");
@@ -94,5 +99,6 @@ function obj = getMPTfunc(obj)
     obj.PolyUnionToC(fileID, {resk.xopt},'k');
     fprintf(fileID,"#endif\n");
     fclose(fileID);
+    fprintf("Writing to pre_mpt.h used %f seconds\n",toc(filewrite_t));
     fprintf("get MPT functions used %f seconds\n",toc(tstart));
 end

@@ -22,7 +22,7 @@ classdef peMPC
 
 properties 
     % The System dynamics
-    % x[k+1] = A x[k] + B u[k] + Cz[k]
+    % x[k+1] = A x[k] + B u[k] 
     % xmin <= C*x + D*u <= xmax
     A   
     B  
@@ -99,17 +99,21 @@ properties
     % for comparison and inilization
     % min 1/2 x'Hx + g'x
     % s.t. QP_l <= Ax <= QP_u
-    %osqp_pro
     QP_H
     QP_g
     QP_A
     QP_l
     QP_u
 
-    % additional variables 
+    % additional variables  -----------------------------------
     MPT_P       % the polyhedra Union solved by MPT, used in the parallel step.
     MPT_inf_bound % the infinite bound of MPT
+    % The MPT solver to be used
+    % list of solver: plcp, mpqp, enumplcp, enumpqp, rlenumpqp
+    % default is plcp, try enumpqp for better speed (might fail for some cases) 
+    mptSolver   
     cons_mul    % constraint multipiler to shrink the constraints and avoid constraint violation
+
 end % End of the properties
 methods (Access = public)
     function out = isPosDef(obj,A)
@@ -168,6 +172,8 @@ methods (Access = public)
         addOptional(p,'umax',inf*ones(obj.nu,1));
         addOptional(p,'N',10);
         addOptional(p,'cons_mul',1);
+        addOptional(p,'mptSolver','plcp');
+
         parse(p,varargin{:});
         obj.xr = p.Results.xr;
         obj.xNr = p.Results.xNr;
@@ -182,41 +188,9 @@ methods (Access = public)
         obj.cons_mul = p.Results.cons_mul;
         obj.ymin = obj.ymin * obj.cons_mul;
         obj.ymax = obj.ymax * obj.cons_mul;
+        obj.mptSolver = p.Results.mptSolver;
     end
-    function obj = init(obj)
-        % initilize  
-        obj.nx = size(obj.B,1);
-        obj.nu = size(obj.B,2);
-        obj = obj.getGH;
-        obj = obj.getGamma;
-        obj = obj.getMaxIter;
-        obj.isFirst = true;
-        %obj.xr = obj.xr'*obj.C ;
-        obj.zr = [kron(ones(obj.N,1),[obj.xr;obj.ur]) ;obj.xNr];
-        tol = 1e-8; % TODO
-        %obj.Q = obj.C'*obj.Q*obj.C; % for low rank C, we first convert it to nonnegative square matrix
-        obj.R = obj.R + tol*eye(size(obj.R)); 
-        obj.Q = obj.Q + tol*eye(size(obj.Q)); 
-        obj.P = obj.P + tol*eye(size(obj.P));
-        obj.Sigma0 = obj.R;
-        obj.Sigmak = blkdiag(obj.Q,obj.R);
-        obj.Sigmak = obj.Sigmak + tol*eye(size(obj.Sigmak));
-        obj.NSigmak = kron(speye(obj.N-1),obj.Sigmak);
-        obj.SigmaN = obj.P;
-        % TODO: add robustness to avoid unbound decoupled problems
-        
-        % init the variables
-      
-        obj.z{obj.N+1} = zeros(obj.nx,1);
-        obj.lam{obj.N+1} = zeros(obj.nx,1);
-        for kk = 1:obj.N
-            obj.lam{kk} = zeros(obj.nx,1);
-            obj.z{kk} = zeros(obj.nu+obj.nx,1);
-        end
-        %obj = obj.preCQP;
-        obj = obj.preRiccati;
-        obj = obj.getLargeQP;
-    end
+    
    
     function obj = getGH(obj)
         % convert the system dynamics to G and H
@@ -303,22 +277,6 @@ methods (Access = public)
     %    obj.dKKT = decomposition(obj.KKT);
     %    fprintf("precomputed KKT matrix for coupled QP with %f seconds\n",toc);
     %end
-
-    function obj = preRiccati(obj)
-        % The Factorization phase of the Riccati method
-        obj.Ric_P{obj.N+1} = 2*obj.P;
-        for n = obj.N:-1:1
-            AtPA = obj.A'*obj.Ric_P{n+1}*obj.A;
-            BtPB = obj.B'*obj.Ric_P{n+1}*obj.B;
-            BtPA = obj.B'*obj.Ric_P{n+1}*obj.A;
-            obj.Ric_Lam{n} = chol(2*obj.R+BtPB,'lower');
-            obj.Ric_Lam_inv{n} = inv(obj.Ric_Lam{n});
-            obj.Ric_L{n} = obj.Ric_Lam{n} \ BtPA;
-            PP = 2*obj.Q + AtPA - obj.Ric_L{n}'* obj.Ric_L{n};
-            obj.Ric_P{n} = 1/2 * (PP+PP');
-        end
-    end
-    
     
     %function obj = solveCoupleUpdate(obj,x0)
     %    % Solve the coupled QP problem of the following form
