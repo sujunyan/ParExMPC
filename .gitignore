@@ -1,0 +1,3 @@
+*.mex*
+@peMPC/c_code/pre_mpt.h
+@peMPC/c_code/predefined.h
