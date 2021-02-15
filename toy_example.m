@@ -1,9 +1,6 @@
-% mpt_init;
-addpath("./mpcBenchmarking");
-addpath(genpath("./mpcBenchmarking/benchmarks"));
-addpath(genpath("./mpcBenchmarking/dataStructures"));
-addpath(genpath("@peMPC"));
-installBenchmarks  
+mpt_init;
+addpath(genpath("@peMPC")); 
+addpath("examples");
 
 % define the problem ------
   Q = [10,0;0,10]; 

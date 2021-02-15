@@ -3,9 +3,6 @@
 % More exmaples can be found on https://github.com/ferreau/mpcBenchmarking.
 % --------------------------------------------------------------
 % mpt_init;
-addpath("./mpcBenchmarking");
-addpath(genpath("./mpcBenchmarking/benchmarks"));
-addpath(genpath("./mpcBenchmarking/dataStructures"));
 addpath("examples");
 addpath("@peMPC");
 
