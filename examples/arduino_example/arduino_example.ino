@@ -1,6 +1,6 @@
 #include "pempc.h"
-#include "pre_mpt.h"
-#include "predefined.h"
+#include "mpQP_data.h"
+#include "MPC_problem.h"
 
 void setup() {
   // setup

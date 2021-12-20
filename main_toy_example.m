@@ -27,9 +27,9 @@ addpath("examples");
     if (i == 1)             % solve the first problem with large maximum iteration
       lam = zeros((N+1)*nx,1);
       z = zeros(N*(nx+nu) + nx ,1);
-      [z,lam,u0] = pempc_get_control_mex(x0,100,tol,z,lam);
+      [z,lam,u0] = peMPC_controller_mex(x0,100,tol,z,lam);
     else
-      [z,lam,u0] = pempc_get_control_mex(x0,maxiter,tol,z,lam);
+      [z,lam,u0] = peMPC_controller_mex(x0,maxiter,tol,z,lam);
     end
     x0 = A*x0+B*u0;         % simulate one step of the system dynamics
   end

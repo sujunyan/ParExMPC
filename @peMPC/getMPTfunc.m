@@ -89,9 +89,9 @@ function obj = getMPTfunc(obj)
     fprintf("solve the MPT problem used %f seconds\n",toc(tstart));
     fprintf("Exporing to C code\n");
 
-    fprintf("Exporing pre_mpt.h\n");
+    fprintf("Exporing mpQP_data.h\n");
     filewrite_t = tic;
-    fileID = fopen([class_folder filesep 'c_code' filesep 'pre_mpt.h'],'w+');
+    fileID = fopen([class_folder filesep 'c_code' filesep 'mpQP_data.h'],'w+');
     fprintf(fileID,"/*predefined mpt matrices for explict evaluation*/\n");
     fprintf(fileID,"#ifndef __PRE_MPT_H__\n#define __PRE_MPT_H__\n");
     %obj.PolyUnionToC(fileID, {res0.xopt},'z');

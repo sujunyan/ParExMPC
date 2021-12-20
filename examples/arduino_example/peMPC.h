@@ -1,7 +1,7 @@
 #ifndef __PEMPC_H__
 #define __PEMPC_H__
-#include "pre_mpt.h"
-#include "predefined.h"
+#include "mpQP_data.h"
+#include "MPC_problem.h"
 #include <stddef.h>
 
 #define y_size (N*(nx+nu)+nx)

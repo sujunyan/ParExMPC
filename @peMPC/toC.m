@@ -9,7 +9,7 @@ end
 
 function writeHeadFile(obj,folder)
     % write ther headers that stores the pre-computed constant variables
-    fileID = fopen([folder,filesep,'predefined.h'],'w+');
+    fileID = fopen([folder,filesep,'MPC_problem.h'],'w+');
     fprintf(fileID,"//Generated header that stores the pre-defined varibales\n");
     fprintf(fileID,"#ifndef __PREDEFINED_H__\n#define __PREDEFINED_H__\n");
     fprintf(fileID,"#include <stddef.h>\n");
