@@ -51,8 +51,8 @@ function obj = getMPTfunc(obj)
     Hs = 4*obj.SigmaN;
     gs = sdpvar(obj.nx,1);
     %gs = -0.5*Hs*(2*obj.xNr + yN) - (obj.GN'*lamN);% The sign is inconsistent with the paper
-    lbs = obj.ymin;
-    ubs = obj.ymax;
+    lbs = obj.dmin;
+    ubs = obj.dmax;
     gs_max = MPTOPTIONS.infbound*ones(size(gs));
     gs_min = -gs_max;
     objective = 1/2*xiN'*Hs*xiN + gs'*xiN;
@@ -75,8 +75,8 @@ function obj = getMPTfunc(obj)
         %- (obj.Gk'*lamk_1 - obj.Hk'*lamk); % The sign is inconsistent with the paper
 
     As = [obj.C,obj.D; zeros(obj.nu,obj.nx), eye(obj.nu)];
-    lbAs = [obj.ymin;obj.umin];
-    ubAs = [obj.ymax;obj.umax];
+    lbAs = [obj.dmin;obj.umin];
+    ubAs = [obj.dmax;obj.umax];
 
     objective = 1/2*xik'*Hs*xik + gs'*xik;
     constraints = [gs_min<= gs<= gs_max, lbAs<= As*xik <=ubAs];

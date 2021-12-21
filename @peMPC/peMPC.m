@@ -7,7 +7,7 @@ classdef peMPC
 %           + (u[k]-u_r)' R (u[k]-u_r) 
 %           + (x[N]-x_Nr)' P (x[N]-x_Nr) 
 %   s.t. x[k+1] = Ax[k] + Bu[k]
-%        ymin  <= Cx[k] + Du[k] <= ymax
+%        dmin  <= Cx[k] + Du[k] <= dmax
 %        umin  <= u[k] <= umax
 % Optional input:
 %       xr: the reference state
@@ -58,8 +58,8 @@ properties
     zr          % The reference stack variable, have size (nx+nu)*N
 
     % State and input constraints
-    ymin        % ymin <= C*x + Du <= ymax
-    ymax
+    dmin        % dmin <= C*x + Du <= dmax
+    dmax
     umin        % umin <= u[k] <= umax
     umax
     z           % The stacked variable [x;u]
@@ -166,8 +166,8 @@ methods (Access = public)
         addOptional(p,'ur',zeros(obj.nu,1));
         addOptional(p,'C',eye(obj.nx));
         addOptional(p,'D',zeros(obj.nx,obj.nu));
-        addOptional(p,'ymin',-inf*ones(obj.nx,1));
-        addOptional(p,'ymax',inf*ones(obj.nx,1));
+        addOptional(p,'dmin',-inf*ones(obj.nx,1));
+        addOptional(p,'dmax',inf*ones(obj.nx,1));
         addOptional(p,'umin',-inf*ones(obj.nu,1));
         addOptional(p,'umax',inf*ones(obj.nu,1));
         addOptional(p,'N',10);
@@ -182,12 +182,12 @@ methods (Access = public)
         obj.D = p.Results.D;
         obj.umin = p.Results.umin;
         obj.umax = p.Results.umax;
-        obj.ymin = p.Results.ymin;
-        obj.ymax = p.Results.ymax;
+        obj.dmin = p.Results.dmin;
+        obj.dmax = p.Results.dmax;
         obj.N = p.Results.N;
         obj.cons_mul = p.Results.cons_mul;
-        obj.ymin = obj.ymin * obj.cons_mul;
-        obj.ymax = obj.ymax * obj.cons_mul;
+        obj.dmin = obj.dmin * obj.cons_mul;
+        obj.dmax = obj.dmax * obj.cons_mul;
         obj.mptSolver = p.Results.mptSolver;
     end
     
@@ -204,8 +204,8 @@ methods (Access = public)
         % the constraint for the augmented variable
         obj.NGkt = kron(speye(obj.N-1),obj.Gk');
         obj.NHkt = kron(speye(obj.N-1),obj.Hk');
-        obj.zmin = [obj.ymin; obj.umin];
-        obj.zmax = [obj.ymax; obj.umax];
+        obj.zmin = [obj.dmin; obj.umin];
+        obj.zmax = [obj.dmax; obj.umax];
     end
     
     function obj = getGamma(obj)
@@ -219,8 +219,8 @@ methods (Access = public)
     function obj = getLargeQP(obj)
         % Get the QP paramters for large QP problems
         % This is for other algorithms to use 
-        obj.ymin = obj.ymin / obj.cons_mul; % goes back to true bound
-        obj.ymax = obj.ymax / obj.cons_mul; % goes back to true bound
+        obj.dmin = obj.dmin / obj.cons_mul; % goes back to true bound
+        obj.dmax = obj.dmax / obj.cons_mul; % goes back to true bound
         obj.QP_H = 2*blkdiag(obj.R, kron(speye(obj.N-1),blkdiag(obj.Q,obj.R)), obj.P);
         qxu = [obj.Q*obj.xr;obj.R*obj.ur];
         obj.QP_g = -2*[obj.R*obj.ur; kron(ones(obj.N-1,1),qxu); obj.P*obj.xNr];
@@ -240,14 +240,14 @@ methods (Access = public)
         %Aineq = speye(obj.N *(obj.nx + obj.nu));
         Aineq_small = [obj.C, obj.D ; zeros(obj.nu,obj.nx), eye(obj.nu)]; 
         Aineq = blkdiag(eye(obj.nu),kron(speye(obj.N-1),Aineq_small), obj.C ); % TODO
-        lineq = [obj.umin; repmat([obj.ymin;obj.umin], obj.N-1, 1); obj.ymin];
-        uineq = [obj.umax; repmat([obj.ymax;obj.umax], obj.N-1, 1); obj.ymax];
+        lineq = [obj.umin; repmat([obj.dmin;obj.umin], obj.N-1, 1); obj.dmin];
+        uineq = [obj.umax; repmat([obj.dmax;obj.umax], obj.N-1, 1); obj.dmax];
         obj.QP_A = [Aeq; Aineq];
         obj.QP_l = [leq; lineq];
         obj.QP_u = [ueq; uineq];
 
-        obj.ymin = obj.ymin * obj.cons_mul; % goes back to shrinked bound
-        obj.ymax = obj.ymax * obj.cons_mul; % goes back to shrinked bound
+        obj.dmin = obj.dmin * obj.cons_mul; % goes back to shrinked bound
+        obj.dmax = obj.dmax * obj.cons_mul; % goes back to shrinked bound
     end   
 
     %function obj = preCQP(obj)

@@ -26,8 +26,8 @@ problem.D = D;        % optional (default, zero matrix)
 problem.umax =  [ 100; 25 ];            % all constraint fields are optional
 problem.umin = -[ 100; 25 ];            % (default values -inf/inf)
 
-problem.ymax =  [ Inf; 1; Inf; 1 ];     % all constraint fields are optional
-problem.ymin = -[ Inf; 1; Inf; 1 ];     % (default values -inf/inf)
+problem.dmax =  [ Inf; 1; Inf; 1 ];     % all constraint fields are optional
+problem.dmin = -[ Inf; 1; Inf; 1 ];     % (default values -inf/inf)
 
 problem.Q  = diag([ 1.14e+4, 2.24e+1, 1.14e+4, 2.94e+1 ]);  % 
 problem.R  = diag([ 2.20e-1, 2.37e-1 ]);                    % 

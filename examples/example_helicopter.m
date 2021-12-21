@@ -19,8 +19,8 @@ problem.B = [   0           0;...
             
 problem.umax =  [   3;     3    ];             
 problem.umin =  [  -1;    -1    ];             
-problem.ymax =  [   inf;    inf;    0.44;   0.6;    inf;    inf];
-problem.ymin = -[   inf;    inf;    0.44;   0.6;    inf;    inf];
+problem.dmax =  [   inf;    inf;    0.44;   0.6;    inf;    inf];
+problem.dmin = -[   inf;    inf;    0.44;   0.6;    inf;    inf];
 
 problem.Q  = eye(6);           
 problem.Q(1,1) = 100;

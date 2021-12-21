@@ -8,8 +8,8 @@ problem.B = [0.2173;
 
 problem.umin = -5;
 problem.umax = 5;
-problem.ymin = -inf;
-problem.ymax = inf;
+problem.dmin = -inf;
+problem.dmax = inf;
 
 problem.Q  = 10*eye(2);  % Q matrix, symmetric, positive semi-definite
 problem.R  = 1;          % R matrix, symmetric, postive  definite (*want to penalize the control in all directions)

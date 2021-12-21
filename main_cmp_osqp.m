@@ -14,7 +14,7 @@ case 'robotArm'
     prob = example_robotArm;
     cons_mul = 0.85; % constraint multiplier
     mpc0 = peMPC(prob.A,prob.B,prob.Q,prob.R,prob.P,'C',prob.C,'D',prob.D,'ur',prob.ur{1}...
-             ,'xr',prob.yr{end},'xNr',prob.xNr,'ymin',prob.ymin,'ymax',prob.ymax ...
+             ,'xr',prob.yr{end},'xNr',prob.xNr,'dmin',prob.dmin,'dmax',prob.dmax ...
                 ,'umin',prob.umin,'umax',prob.umax,'N',prob.ni,'cons_mul',cons_mul);
 case 'toyExample'
     prob = example_toyExample;
@@ -24,7 +24,7 @@ case 'helicopter'
     prob = example_helicopter;
     cons_mul = 0.95; % constraint multiplier
     mpc0 = peMPC(prob.A,prob.B,prob.Q,prob.R,prob.P,'C',prob.C,'ur',prob.ur{1}...
-             ,'xr',prob.yr{end},'xNr',prob.xNr,'ymin',prob.ymin,'ymax',prob.ymax ...
+             ,'xr',prob.yr{end},'xNr',prob.xNr,'dmin',prob.dmin,'dmax',prob.dmax ...
                 ,'umin',prob.umin,'umax',prob.umax,'N',prob.ni,'cons_mul',cons_mul);
 end
 
@@ -88,7 +88,7 @@ for i = 1:nsim
         xnqp = prob.A*x0qp + prob.B*u0qp;
     end
     xn = prob.A*x0+prob.B*u0;
-    cons_vio_flag = sum(xn>prob.ymax) + sum(xn<prob.ymin); % check if it violate the state constraint
+    cons_vio_flag = sum(xn>prob.dmax) + sum(xn<prob.dmin); % check if it violate the state constraint
     if cons_vio_flag
         warning("state constraint violate for pempc, consider set smaller cons_mul");
         break;
