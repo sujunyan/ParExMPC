@@ -1,9 +1,18 @@
-
 #ifndef __PEMPC_H__
 #define __PEMPC_H__
 
 #include "MPC_problem.h"
 #include <stddef.h>
+
+/**
+ * Notations: since we are still writing the paper, the notation may not be consistent with the paper. 
+ * Here I mainly refer to the notation in the paper: 
+ * [1] Y. Jiang, J. Oravec, B. Houska and M. Kvasnica, "Parallel MPC for Linear Systems with Input Constraints," in IEEE Transactions on Automatic Control, doi: 10.1109/TAC.2020.3020827.
+ * [2] submitted paper
+ * y: the primal variable, stacked x in the paper [2]
+ * xi: the alternative direction, stacked y in the paper [2]
+ * lam: the dual variable, should be consistent in the paper [2]
+*/
 
 #define y_size (N*(nx+nu)+nx)
 #define lam_size ((N+1)*nx)
