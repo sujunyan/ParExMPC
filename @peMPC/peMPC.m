@@ -1,7 +1,7 @@
 classdef peMPC
 % parallel explicit MPC controller 
 % TODO: refer to the paper: https://arxiv.org/abs/1903.06790 
-% Authors:         Junyan Su
+% Author:         Junyan Su
 % The pempc object to solve the problem of the form
 %   \min \sum (x[k]-x_r)' Q (x[k]-x_r) for k = 1...N-1
 %           + (u[k]-u_r)' R (u[k]-u_r) 
@@ -13,7 +13,7 @@ classdef peMPC
 %       xr: the reference state
 %       xNr: the reference terminal state
 %       ur: the reference control input
-%       xmin,xmax: the state contraint  
+%       dmin,dmax: the state contraint  
 %       umin,umax: the control input contraint  
 %       N: the time horizon
 %       cons_mul: the contraint multipiler, often set less than 1 to avoid contraint violation
@@ -23,7 +23,7 @@ classdef peMPC
 properties 
     % The System dynamics
     % x[k+1] = A x[k] + B u[k] 
-    % xmin <= C*x + D*u <= xmax
+    % dmin <= C*x + D*u <= dmax
     A   
     B  
     C
