@@ -28,12 +28,9 @@ case 'helicopter'
                 ,'umin',prob.umin,'umax',prob.umax,'N',prob.ni,'cons_mul',cons_mul);
 end
 
-%mpc0.N = 20;
-mpc0 = mpc0.init;
 x0 = prob.x0;
-mpc0 = mpc0.getMPTfunc;
-mpc0.toC;
-mpc0.compile_c;
+%mpc0.N = 20;
+mpc0 = mpc0.build;
 mpc0.maxiter = 10;
 tol = 1e-4;
 %% setup problems for osqp 

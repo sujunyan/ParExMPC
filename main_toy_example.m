@@ -14,10 +14,8 @@ addpath("examples");
   
   % use the ParExMPC interface ------
   mpc0 = peMPC(A,B,Q,R,P,'umin',umin,'umax',umax,'N',N);
-  mpc0 = mpc0.init;                % initialize the pempc solver
-  mpc0 = mpc0.getMPTfunc; 	% generate mpt codes
-  mpc0.toC;               	% generate c code
-  mpc0.compile_c;        
+
+  mpc0 = mpc0.build; 
   maxiter = 5;
   % start of MPC simulation ------
   nsim = 100;
