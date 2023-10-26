@@ -1,6 +1,6 @@
 function obj = build(obj)
-    obj = obj.init; % initialize the pempc solver
-    obj = obj.getMPTfunc; % generate mpt codes
-    obj.toC; % generate c code
-    obj.compile_c;
+obj = obj.init; % initialize the peMPC solver
+obj = obj.getMPTfunc; % generate MPT codes
+obj.toC; % generate C code
+obj.compile_c;
 end

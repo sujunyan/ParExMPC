@@ -1,23 +1,22 @@
 function PolyUnionToC(obj, fid, PU, prefix)
-% Modified from original method @PolyUnion.toC() form MPT Toolbox. 
-% We modify this file specific for our application for better performance. 
+% Modified from original method @PolyUnion.toC() form MPT Toolbox.
+% We modify this file specific for our application for better performance.
 %
 % Exports PWA/PWQ function to a C-code that uses a sequential search to
-% evaluate the function. 
+% evaluate the function.
 %
 %   syntax: U.toC('function', 'output','tie_break_fcn')
 %
 %   'fid' - fileID to wirte to
-%   'PU' - the PolyUnion object to export 
+%   'PU' - the PolyUnion object to export
 %   'prefix' - the prefix to identify different data
 %
-%  Generated code contains a single .h file which contains the necessary matrix 
+%  Generated code contains a single .h file which contains the necessary matrix
 %  for evaluation. We implement the evaluation function inside the pempc.c file.
-%  Note that we have 3 PWA functions in total to output, so in this file, we 
+%  Note that we have 3 PWA functions in total to output, so in this file, we
 %  only produces the data and leave other macro to other function
 
 global MPTOPTIONS
-
 
 PU = PU{1};
 function_name = 'primal';
@@ -35,9 +34,9 @@ end
 
 % check that the PolyUnion is full-dimensional
 for i=1:numel(PU)
-   if ~PU(i).isFullDim       
-       error('The export to C-code works only for full-dimensional partitions.');
-   end    
+    if ~PU(i).isFullDim
+        error('The export to C-code works only for full-dimensional partitions.');
+    end
 end
 
 % only PWA/PWQ functions are allowed
@@ -48,7 +47,7 @@ for i=1:numel(PU)
     end
     for j=1:PU(i).Num
         if ~(isa(PU(i).Set(j).Functions(function_name), 'AffFunction') || ...
-            isa(PU(i).Set(j).Functions(function_name), 'QuadFunction') )
+                isa(PU(i).Set(j).Functions(function_name), 'QuadFunction') )
             error('Only quadratic and affine functions are supported.');
         end
         if ~isempty(tie_break_fcn)
@@ -60,7 +59,6 @@ for i=1:numel(PU)
     end
 end
 
-
 % check that all PolyUnions have requested functions and the range is the same
 for i=1:numel(PU)
     R = PU(1).Set(1).Functions(function_name).R;
@@ -70,8 +68,6 @@ for i=1:numel(PU)
         end
     end
 end
-
-
 
 % single or double precision to export?
 precision = MPTOPTIONS.modules.geometry.unions.PolyUnion.toC.precision;
@@ -84,7 +80,6 @@ end
 if isequal(precision,'single')
     precision = 'float';
 end
-
 
 % extract polyhedra with control law
 Pn = [PU.Set];
@@ -106,7 +101,6 @@ nctotal = 0;
 for ii=1:total_nr,
     nctotal = nctotal + size(Pn(ii).H,1);
 end
-
 
 % extract dimensions
 nx = PU(1).Dim; % domain
@@ -175,7 +169,6 @@ writeCellMatrices(An,fid,precision);
 %end
 %str_buffer = str_buffer + '};\n\n';
 
-
 %ctr = 0;
 fprintf(fid, 'static %s %sMPT_B[] = {\n',precision,prefix);
 writeCellMatrices(bn,fid,precision);
@@ -217,7 +210,6 @@ for ii = 1:total_nr,
 end
 fprintf(fid, '};\n\n');
 
-
 F_name = [prefix, 'MPT_F'];
 G_name = [prefix, 'MPT_G'];
 sub_write_matrix(Fi, F_name, fid, precision);
@@ -227,7 +219,6 @@ sub_write_matrix(FTBi, [prefix, 'MPT_FTB'], fid, precision);
 sub_write_matrix(GTBi, [prefix, 'MPT_GTB'], fid, precision);
 
 end % end of PolyUnionToC
-
 
 function sub_write_matrix(matrices, name, fid, precision)
 %
@@ -287,25 +278,24 @@ writeCellMatrices(matrices,fid,precision);
 end
 
 function writeCellMatrices(matrices,fid,precision)
-  %% write the tailor of a cell to fid 
-  % syntax:
-  %         matrix - a cell array with matrix data
-  %         name - name of the matrix given as string
-  %         fid - file identificator
-  %         precision - either "float" or "double"
-
-  An_mat = cell2mat(matrices);
-  An_v = reshape(An_mat',[],1);
-  if length(An_v) == 1 % there is no colon for single element array
+%% write the tailor of a cell to fid
+% syntax:
+%         matrix - a cell array with matrix data
+%         name - name of the matrix given as string
+%         fid - file identificator
+%         precision - either "float" or "double"
+An_mat = cell2mat(matrices);
+An_v = reshape(An_mat',[],1);
+if length(An_v) == 1 % there is no colon for single element array
     buf2 = sprintf("%.7e ",An_v(end)) + '};\n\n';
-  else
+else
     if isequal(precision,'float')
-      buf2 = sprintf("%.7e,\t",An_v(1:end-1));
-      buf2 = buf2 + sprintf("%.7e ",An_v(end)) + '};\n\n';
+        buf2 = sprintf("%.7e,\t",An_v(1:end-1));
+        buf2 = buf2 + sprintf("%.7e ",An_v(end)) + '};\n\n';
     else
-      buf2 = sprintf("%.14e,\t",An_v(1:end-1));
-      buf2 = buf2 + sprintf("%.14e ",An_v(end)) + '};\n\n';
+        buf2 = sprintf("%.14e,\t",An_v(1:end-1));
+        buf2 = buf2 + sprintf("%.14e ",An_v(end)) + '};\n\n';
     end
-  end
-  fprintf(fid,buf2);
+end
+fprintf(fid,buf2);
 end
