@@ -51,7 +51,7 @@ qpTime = 0; % time used by QP solver
 peTime = 0; % time used by peMPC
 cnt = 0;
 for i = 1:nsim
-    fprintf("%d-th simulation\n",i);
+    fprintf(" Simulation: %d/%d \n", i,nsim);
     x0qp = xqpL(:,end);
     x0 = xL(:,end);
     % update the large matrix for 
@@ -107,9 +107,9 @@ for i = 1:nsim
 end
 nsim0 = length(JL);
 if ospq_flag
-    fprintf("QPMPC used %f s, %f s per iter \npeMPC used %f s, %f s per iter\n"...
+    fprintf("QPMPC required %f sec, %f sec/iteration \npeMPC required %f sec, %f sec/iteration\n"...
             ,qpTime,qpTime/nsim0,peTime,peTime/nsim0);
-    fprintf("The ratio qpTime/peTime is %f\n",qpTime/peTime);
+    fprintf("The ratio qpTime/peTime is %f sec.\n",qpTime/peTime);
 else
     qpTime = NaN;
     JqpL = [NaN];

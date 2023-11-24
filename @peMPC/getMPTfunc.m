@@ -2,7 +2,7 @@ function obj = getMPTfunc(obj)
 % get MPT functions for decouple problems
 
 % The bound of the parameter theata
-fprintf("Getting MPT functions\n");
+fprintf("Calling MPT functions...\n");
 
 mptopt('verbose',0);
 global MPTOPTIONS;
@@ -59,7 +59,7 @@ objective = 1/2*xiN'*Hs*xiN + gs'*xiN;
 constraints = [gs_min<=gs<=gs_max, lbs <= obj.C*xiN <= ubs ];
 problemN = Opt(constraints,objective,gs,xiN);
 %problemN = Opt('H',Hs,'pF',eye(obj.nx),'lb',obj.xmin,'ub',obj.xmax);
-fprintf("Getting MPT functions for problems N -----------------------------------------------------\n");
+fprintf("Calling MPT functions for N-th problem -----------------------------------------------------\n");
 resN = problemN.solve;
 %resN.xopt.toMatlab([func_folder filesep 'MPT_func_N.m'],'primal',tiebreak);
 
@@ -82,13 +82,13 @@ objective = 1/2*xik'*Hs*xik + gs'*xik;
 constraints = [gs_min<= gs<= gs_max, lbAs<= As*xik <=ubAs];
 %constraints = [lbAs<= As*xik <=ubAs];
 problemk = Opt(constraints,objective,gs,xik);
-fprintf("Getting MPT functions for problems k -----------------------------------------------------\n");
+fprintf("Calling MPT functions for k-th problem -----------------------------------------------------\n");
 resk = problemk.solve;
 
-fprintf("solve the MPT problem used %f seconds\n",toc(tstart));
-fprintf("Exporing to C code\n");
+fprintf("Multiparametric problem solved in %f seconds.\n",toc(tstart));
+fprintf("Export to C-code:\n");
 
-fprintf("Exporing mpQP_data.h\n");
+fprintf("Export of file 'mpQP_data.h'.\n");
 filewrite_t = tic;
 fileID = fopen([class_folder filesep 'c_code' filesep 'mpQP_data.h'],'w+');
 fprintf(fileID,"/*predefined mpt matrices for explict evaluation*/\n");
@@ -98,6 +98,6 @@ obj.PolyUnionToC(fileID, {resN.xopt},'N');
 obj.PolyUnionToC(fileID, {resk.xopt},'k');
 fprintf(fileID,"#endif\n");
 fclose(fileID);
-fprintf("Writing to pre_mpt.h used %f seconds\n",toc(filewrite_t));
-fprintf("get MPT functions used %f seconds\n",toc(tstart));
+fprintf("Export to 'pre_mpt.h' required %f seconds.\n",toc(filewrite_t));
+fprintf("Calling MPT functions required %f seconds.\n",toc(tstart));
 end
