@@ -20,13 +20,13 @@ mpc0 = mpc0.build;
 
 % start of MPC simulation ------
 maxiter = 5;
-nsim = 100;
+Nsim = 100;
 [nx,nu] = size(B);
 % the tolerance in the MPC iteration
 tol = 1e-4;
-X = [];
+X = [x0];
 U = [];
-for k = 1:nsim
+for k = 1:Nsim
     % solve the first problem with a large maximum iteration
     if (k == 1)
         lam = zeros((N+1)*nx,1);
@@ -40,3 +40,16 @@ for k = 1:nsim
     X = [X,x0];
     U = [U,u0];
 end
+%% Show figures:
+% System states
+figure, hold on, box on, xlabel('k'), ylabel('x')
+stairs([0:Nsim],X(1,:),'-')
+stairs([0:Nsim],X(2,:),'--')
+stairs([0,Nsim],[0;0],'k:')
+legend('x_{1}','x_{2}','origin')
+% Control inputs
+figure, hold on, box on, xlabel('k'), ylabel('u')
+stairs([0:Nsim-1],U,'-')
+stairs([0,Nsim],[umin;umin],'k:')
+stairs([0,Nsim],[umax;umax],'k.-')
+legend('u','u_{min}','u_{max}')

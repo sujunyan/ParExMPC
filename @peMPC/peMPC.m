@@ -212,9 +212,13 @@ classdef peMPC
             % TODO
         end
         function obj = getMaxIter(obj, varargin)
-            % TODO: place the formula for the maximum number of iteration
-            % to guarantee the closed-loop system stability "m_bar"
+            % Function "getMaxIter" evaluates minimum necessary iterations
+            % for the stability guarantees (m_bar)
             %
+            % obj = getMaxIter(obj, kappa, gamma, sigma, eta, tau)
+            % 
+            % maxiter = 2*log(2*eta*gamma*sqrt(sigma*(1+kappa)/kappa) + ...
+            %           2*tau*sigma*gamma^2*(1+kappa)/kappa)/log(1/kappa) 
             if isempty(varargin)
                 obj.maxiter = 5;
             else

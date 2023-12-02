@@ -7,7 +7,7 @@ addpath("examples");
 addpath("@peMPC");
 
 caseName = 'toyExample'; 
-cons_mul = 1;       % constraint multiplier
+cons_mul = 1;      % constraint multiplier
 ospq_flag = true;  % flag to determine wether user want to use osqp
 switch caseName
 case 'robotArm'
@@ -36,8 +36,8 @@ tol = 1e-4;
 %% setup problems for osqp 
 if ospq_flag
 osqp_pro = osqp;
-osqp_pro.setup(mpc0.QP_H, mpc0.QP_g, mpc0.QP_A, mpc0.QP_l, mpc0.QP_u, ...
-                    'warm_start', true,'verbose',false,'eps_abs',tol,'eps_rel',tol,'max_iter',1e5,'polish',true);
+osqp_pro.setup(mpc0.QP_H, mpc0.QP_g, mpc0.QP_A, mpc0.QP_l, mpc0.QP_u,...
+    'warm_start', true,'verbose',false,'eps_abs',tol,'eps_rel',tol,'max_iter',1e5,'polish',true);
 end
 
 %% Simulate in closed loop -----------------------------

@@ -11,9 +11,9 @@ problem.umax = 5;
 problem.dmin = -inf;
 problem.dmax = inf;
 
-problem.Q  = 10*eye(2);  % Q matrix, symmetric, positive semi-definite
-problem.R  = 1;          % R matrix, symmetric, postive  definite (*want to penalize the control in all directions)
-problem.ni = 10;         % N horizon lengt
+problem.Q = 10*eye(2);  % Q matrix, symmetric, positive semi-definite
+problem.R = 1;          % R matrix, symmetric, postive  definite (*want to penalize the control in all directions)
+problem.ni = 10;        % N horizon lengt
 problem.C = eye(2);
 
 [~,problem.P] = dlqr(problem.A,problem.B, ... 
