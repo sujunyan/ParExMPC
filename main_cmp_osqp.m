@@ -59,13 +59,17 @@ for i = 1:nsim
     mpc0.QP_u(1:mpc0.nx) = -mpc0.A*x0qp;
     if (i == 1) % solve the first problem with osqp
         if ospq_flag
+            tstart1 = tic;
             osqp_pro.update('l',mpc0.QP_l,'u',mpc0.QP_u);
             osqp_res = osqp_pro.solve();
+            qpTime = qpTime + toc(tstart1);
             u0qp = osqp_res.x(1:mpc0.nu);
         end
         z = zeros(mpc0.N*(mpc0.nx+mpc0.nu) + mpc0.nx,1);
         lam = zeros((mpc0.N+1)*mpc0.nx,1);
+        tstart2 = tic;
         [z,lam,u0] = peMPC_controller_mex(x0,100,tol,z,lam);
+        peTime = peTime + toc(tstart2);
     else
         % solve osqp -----------------
         if ospq_flag

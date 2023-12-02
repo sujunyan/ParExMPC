@@ -211,11 +211,21 @@ classdef peMPC
         function obj = getGamma(obj)
             % TODO
         end
-        function obj = getMaxIter(obj)
+        function obj = getMaxIter(obj, varargin)
             % TODO: place the formula for the maximum number of iteration
             % to guarantee the closed-loop system stability "m_bar"
             %
-            % obj.maxiter = 5;
+            if isempty(varargin)
+                obj.maxiter = 5;
+            else
+                kappa   = varargin{1};
+                gamma   = varargin{2};
+                sigma   = varargin{3};
+                eta     = varargin{4};
+                tau     = varargin{5};
+                obj.maxiter = 2*log(2*eta*gamma*sqrt(sigma*(1+kappa)/kappa)+...
+                             2*tau*sigma*gamma^2*(1+kappa)/kappa)/log(1/kappa);
+            end
         end
 
         function obj = getLargeQP(obj)
