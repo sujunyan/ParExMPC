@@ -37,14 +37,14 @@ mpc_ctrl = mpt2parexmpc( mpt_ctrl, 'cons_mul',0.5,'mptSolver','mpqp' );
 mpc_ctrl = mpt2parexmpc( mpt_ctrl, 'N', N, 'cons_mul',0.5,'mptSolver','mpqp' );
 
 %% OPTION 6: Translate MPT-based LTI system to ParExMPC-based MPC controller:
-mpc0 = model_mpt2parexmpc( model, N );
+mpc_ctrl = model_mpt2parexmpc( model, N );
 
 %% OPTION 7: Translate MPT-based non-explicit MPC controller to ParExMPC-based MPC controller:
-mpc0 = controller_mpt2parexmpc( mpt_ctrl );
+mpc_ctrl = controller_mpt2parexmpc( mpt_ctrl );
 
 % use the ParExMPC interface ------
 % call help peMPC to see available optional parameters.
-mpc0 = mpc0.build;
+mpc_ctrl = mpc_ctrl.build;
 
 % start of MPC simulation ------
 maxiter = 5;
