@@ -46,13 +46,6 @@ mpc_ctrl = controller_mpt2parexmpc( mpt_ctrl );
 % call help peMPC to see available optional parameters.
 mpc_ctrl = mpc_ctrl.build;
 
-%% OPTION 7: Translate MPT-based non-explicit MPC controller to ParExMPC-based MPC controller:
-mpc0 = controller_mpt2parexmpc( mpt_ctrl );
-
-% use the ParExMPC interface ------
-% call help peMPC to see available optional parameters.
-mpc0 = mpc0.build;
-
 % start of MPC simulation ------
 maxiter = 5;
 Nsim = 100;
