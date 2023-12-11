@@ -219,14 +219,25 @@ classdef peMPC
             % 
             % maxiter = 2*log(2*eta*gamma*sqrt(sigma*(1+kappa)/kappa) + ...
             %           2*tau*sigma*gamma^2*(1+kappa)/kappa)/log(1/kappa) 
+
             if isempty(varargin)
-                obj.maxiter = 5;
+                obj.maxiter = 5; % Default value
             else
-                kappa   = varargin{1};
-                gamma   = varargin{2};
-                sigma   = varargin{3};
-                eta     = varargin{4};
-                tau     = varargin{5};
+                % Input parser
+                p = inputParser;
+                addOptional(p,'kappa',-Inf);
+                addOptional(p,'gamma',-Inf);
+                addOptional(p,'sigma',-Inf);
+                addOptional(p,'eta',-Inf);
+                addOptional(p,'tau',-Inf);
+                parse(p,varargin{:});
+                % Extract variables
+                kappa   = p.Results.kappa;
+                gamma   = p.Results.gamma;
+                sigma   = p.Results.sigma;
+                eta     = p.Results.eta;
+                tau     = p.Results.tau;
+                % evaluation of MAXITER
                 obj.maxiter = 2*log(2*eta*gamma*sqrt(sigma*(1+kappa)/kappa)+...
                              2*tau*sigma*gamma^2*(1+kappa)/kappa)/log(1/kappa);
             end
