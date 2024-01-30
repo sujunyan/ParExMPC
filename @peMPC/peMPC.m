@@ -211,17 +211,29 @@ classdef peMPC
         function obj = getGamma(obj)
             % TODO
         end
+
         function obj = getMaxIter(obj, varargin)
             % Function "getMaxIter" evaluates minimum necessary iterations
             % for the stability guarantees (m_bar)
             %
             % obj = getMaxIter(obj, kappa, gamma, sigma, eta, tau)
             % 
-            % maxiter = 2*log(2*eta*gamma*sqrt(sigma*(1+kappa)/kappa) + ...
-            %           2*tau*sigma*gamma^2*(1+kappa)/kappa)/log(1/kappa) 
+            % maxiter = 2*log( 2*eta*gamma*sqrt( sigma*(1 + kappa) / kappa )+...
+            %                  2*tau*sigma*gamma^2*( 1 + kappa ) / kappa ) / log( 1 / kappa ); 
             %
             % where:
             %
+            % kappa < 1
+            %
+            % || u_opt ||_2 < gamma * || x_0 ||_Q
+            %
+            % || V(x+_0) - V(x_1) || < eta_bar * || x+_0 - x_1 ||_2 + tau_bar * || x+_0 - x_1 ||^2_2
+            % eta = eta_bar * SQRT( max_eigenvalue( BETA^T * B^T * B * BETA ) )
+            % tau = 0.5 * tau_bar * max_eigenvalue( BETA^T * B^T * B *BETA ) 
+            % BETA = [ I, 0, ..., 0]
+            
+            
+            % CDC 2023 formulation:
             % kappa < 1
             %
             % || u_opt ||_2 < gamma * || x_0 ||_Q
@@ -230,7 +242,7 @@ classdef peMPC
             % eta_1 = eta_bar_1 * SQRT( max_eigenvalue( BETA^T * B^T * B * BETA ) )
             % eta_2 = 0.5 * eta_bar_2 * max_eigenvalue( BETA^T * B^T * B *BETA ) 
             % BETA = [ I, 0, ..., 0]
-            %
+             
             if isempty(varargin)
                 obj.maxiter = 5; % Default value
             else
@@ -249,8 +261,8 @@ classdef peMPC
                 eta     = p.Results.eta;
                 tau     = p.Results.tau;
                 % evaluation of MAXITER
-                obj.maxiter = 2*log(2*eta*gamma*sqrt(sigma*(1+kappa)/kappa)+...
-                             2*tau*sigma*gamma^2*(1+kappa)/kappa)/log(1/kappa);
+                obj.maxiter = 2*log( 2*eta*gamma*sqrt( sigma*(1 + kappa) / kappa )+...
+                              2*tau*sigma*gamma^2*( 1 + kappa ) / kappa ) / log( 1 / kappa );
             end
         end
 
