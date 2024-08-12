@@ -15,17 +15,17 @@ case 'robotArm'
     cons_mul = 0.85; % constraint multiplier
     mpc0 = peMPC(prob.A,prob.B,prob.Q,prob.R,prob.P,'C',prob.C,'D',prob.D,'ur',prob.ur{1}...
              ,'xr',prob.yr{end},'xNr',prob.xNr,'dmin',prob.dmin,'dmax',prob.dmax ...
-                ,'umin',prob.umin,'umax',prob.umax,'N',prob.ni,'cons_mul',cons_mul);
+                ,'umin',prob.umin,'umax',prob.umax,'N',prob.ni,'cons_mul',cons_mul, 'parallel', false);
 case 'toyExample'
     prob = example_toyExample;
     mpc0 = peMPC(prob.A,prob.B,prob.Q,prob.R,prob.P,...
-                'umin',prob.umin,'umax',prob.umax,'N',prob.ni,'cons_mul',cons_mul);
+                'umin',prob.umin,'umax',prob.umax,'N',prob.ni,'cons_mul',cons_mul, 'parallel', false);
 case 'helicopter'
     prob = example_helicopter;
     cons_mul = 0.95; % constraint multiplier
     mpc0 = peMPC(prob.A,prob.B,prob.Q,prob.R,prob.P,'C',prob.C,'ur',prob.ur{1}...
              ,'xr',prob.yr{end},'xNr',prob.xNr,'dmin',prob.dmin,'dmax',prob.dmax ...
-                ,'umin',prob.umin,'umax',prob.umax,'N',prob.ni,'cons_mul',cons_mul);
+                ,'umin',prob.umin,'umax',prob.umax,'N',prob.ni,'cons_mul',cons_mul, 'parallel', true);
 end
 
 x0 = prob.x0;

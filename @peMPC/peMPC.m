@@ -112,6 +112,7 @@ classdef peMPC
         % default is plcp, try enumpqp for better speed (might fail for some cases)
         mptSolver
         cons_mul    % constraint multipiler to shrink the constraints and avoid constraint violation
+        use_parallel % a flag to choose if we want to use parallelism or not.
 
     end % End of the properties
 
@@ -174,6 +175,7 @@ classdef peMPC
             addOptional(p,'N',10);
             addOptional(p,'cons_mul',1);
             addOptional(p,'mptSolver','plcp');
+            addOptional(p,'parallel', false);
 
             parse(p,varargin{:});
             obj.xr = p.Results.xr;
@@ -190,6 +192,7 @@ classdef peMPC
             obj.dmin = obj.dmin * obj.cons_mul;
             obj.dmax = obj.dmax * obj.cons_mul;
             obj.mptSolver = p.Results.mptSolver;
+            obj.use_parallel = p.Results.parallel;
         end
 
         function obj = getGH(obj)
