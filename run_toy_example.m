@@ -10,7 +10,7 @@ x0 = [10;0];
 
 % use the ParExMPC interface ------
 % call help peMPC to see available optional parameters.
-mpc0 = peMPC(A,B,Q,R,P,'umin',umin,'umax',umax,'N',N,'parallel',false);
+mpc0 = peMPC(A,B,Q,R,P,'umin',umin,'umax',umax,'N',N, 'par_flag',true, 'par_threshold', 20);
 mpc0 = mpc0.build;
 
 % start of MPC simulation ------

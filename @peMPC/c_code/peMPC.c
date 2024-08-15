@@ -9,7 +9,6 @@
 #ifdef USE_BLAS 
 #include "blas.h" // This file is copied from matlab
 #endif
-// #define USE_OPENMP (PEMPC_N >= 20) change to controlled by the MATLAB API code
 
 
 // commented out for the use of dualized x0

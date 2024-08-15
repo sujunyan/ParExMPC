@@ -15,9 +15,9 @@ fprintf(fileID,"#include <stddef.h>\n");
 fprintf(fileID,"static const size_t nx = %d;\n",obj.nx);
 fprintf(fileID,"static const size_t nu = %d;\n",obj.nu);
 fprintf(fileID,"static const size_t N = %d;\n",obj.N);
-fprintf(fileID,"#define PEMPC_N %d // for control the openmp\n",obj.N);
+fprintf(fileID,"#define PEMPC_N %d // for control the openmp\n", obj.N);
 if obj.use_parallel
-    fprintf(fileID,"#define USE_OPENMP 1 // for control the openmp\n");
+    fprintf(fileID,"#define USE_OPENMP (PEMPC_N > %d) // for control the openmp\n", obj.parallel_threshold);
 else
     fprintf(fileID,"#define USE_OPENMP 0 // for control the openmp\n");
 end

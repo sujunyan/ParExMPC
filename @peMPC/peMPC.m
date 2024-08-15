@@ -17,6 +17,8 @@ classdef peMPC
     %       umin,umax: the control input contraint
     %       N: the time horizon
     %       cons_mul: the contraint multipiler, often set less than 1 to avoid contraint violation
+    %       par_flag: the boolean flag to enable/disable the parallism implementaion
+    %       par_threshold: if the time horizon is larger than this threshold, then enable the parallel computing, valid only when par_flag is true.
     % Call:
     %       mpc0 = peMPC(A,B,Q,R,P,{,optional inputs})
 
@@ -113,6 +115,7 @@ classdef peMPC
         mptSolver
         cons_mul    % constraint multipiler to shrink the constraints and avoid constraint violation
         use_parallel % a flag to choose if we want to use parallelism or not.
+        parallel_threshold % if the time horizon larger than this threshold, then enable the parallel computing.
 
     end % End of the properties
 
@@ -142,6 +145,9 @@ classdef peMPC
             %   umin,umax: the control input contraint
             %   N: the time horizon
             %   cons_mul: the contraint multipiler, often set less than 1 to avoid contraint violation
+            %   par_flag: the boolean flag to enable/disable the parallism
+            %   implementaion 
+            %   
             % Call:
             %   mpc0 = peMPC(A,B,Q,R,P,{,optional inputs})
             if (nargin == 0)
@@ -175,7 +181,8 @@ classdef peMPC
             addOptional(p,'N',10);
             addOptional(p,'cons_mul',1);
             addOptional(p,'mptSolver','plcp');
-            addOptional(p,'parallel', false);
+            addOptional(p,'par_flag', true);
+            addOptional(p,'par_threshold', 20);
 
             parse(p,varargin{:});
             obj.xr = p.Results.xr;
@@ -192,7 +199,8 @@ classdef peMPC
             obj.dmin = obj.dmin * obj.cons_mul;
             obj.dmax = obj.dmax * obj.cons_mul;
             obj.mptSolver = p.Results.mptSolver;
-            obj.use_parallel = p.Results.parallel;
+            obj.use_parallel = p.Results.par_flag;
+            obj.parallel_threshold = p.Results.par_threshold;
         end
 
         function obj = getGH(obj)
