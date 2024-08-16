@@ -10,15 +10,15 @@ classdef peMPC
     %        dmin  <= Cx[k] + Du[k] <= dmax
     %        umin  <= u[k] <= umax
     % Optional input:
-    %       xr: the reference state
-    %       xNr: the reference terminal state
-    %       ur: the reference control input
-    %       dmin,dmax: the state contraint
-    %       umin,umax: the control input contraint
-    %       N: the time horizon
-    %       cons_mul: the contraint multipiler, often set less than 1 to avoid contraint violation
-    %       par_flag: the boolean flag to enable/disable the parallism implementaion
-    %       par_threshold: if the time horizon is larger than this threshold, then enable the parallel computing, valid only when par_flag is true.
+    %   xr: the reference state. The default value is zero
+    %   xNr: the reference terminal state. The default value is zero
+    %   ur: the reference control input. The default value is zero
+    %   xmin,xmax: the state constraint. The default value is [-inf,inf]
+    %   umin,umax: the control input constraint. The default value is [-inf,inf]
+    %   N: the time horizon. The default value is 10
+    %   cons_mul: the constraint multiplier, often set less than 1 to avoid constraint violation. The default value is 1
+    %   par_flag: the boolean flag to enable/disable the parallel computing. The default value is true
+    %   par_threshold: enable the parallel computing if the time horizon is larger than the threshold. The default value is 20
     % Call:
     %       mpc0 = peMPC(A,B,Q,R,P,{,optional inputs})
 
