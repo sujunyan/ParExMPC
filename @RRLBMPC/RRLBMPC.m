@@ -1,14 +1,15 @@
 classdef RRLBMPC
     % parallel explicit MPC controller
-    % TODO: refer to the paper: https://arxiv.org/abs/1903.06790
+    % TODO: refer to the paper: xxxxxxx
+    % TODO: add more information on the RRLB related properties
     % Author:         Junyan Su
     % The pempc object to solve the problem of the form
     %   \min \sum (x[k]-x_r)' Q (x[k]-x_r) for k = 1...N-1
     %           + (u[k]-u_r)' R (u[k]-u_r)
     %           + (x[N]-x_Nr)' P (x[N]-x_Nr)
     %   s.t. x[k+1] = Ax[k] + Bu[k]
-    %        dmin  <= Cx[k] + Du[k] <= dmax
-    %        umin  <= u[k] <= umax
+    %        Cx * x[k] <= dx
+    %        Cu * u[k] <= du
     % Optional input:
     %   xr: the reference state. The default value is zero
     %   xNr: the reference terminal state. The default value is zero
@@ -25,23 +26,22 @@ classdef RRLBMPC
     properties
         % The System dynamics
         % x[k+1] = A x[k] + B u[k]
-        % dmin <= C*x + D*u <= dmax
+        % Cx * x[k] <= dx
+        % Cu * u[k] <= du
         A
         B
-        C
-        D
+        Cx
+        dx
+        Cu
+        du
         % TODO: for now, we assume the system is fully observable
 
-        % The converted system dynamics---in case we have a different system format
-        % G[k+1]z[k+1] = H[k]z[k] + h[k]
-        % where z[0] = u[0]; z[k] = [x[k]; u[k]]; z[N] = x[N]
-        % GN
-        Gk
-        NGkt        % kron(eye(N-1),Gk')
-        GN
-        Hk
-        NHkt        % kron(eye(N-1),Hk')
-        H0
+        % Reference values
+        % TODO: for now, we treat it as constant
+        xr          % reference state trajectory
+        ur          % reference input trajectory
+        xNr         % reference terminal state
+        zr          % The reference stack variable, have size (nx+nu)*N
 
         % Objective function
         Q           %  (x[k]-x_r[k])' Q (x[k]-x_r[k]) for k = 1...N-1
@@ -52,21 +52,12 @@ classdef RRLBMPC
         NSigmak     % kron(eye(N-1),Sigmak)
         SigmaN      % P
 
-        % Reference values
-        % TODO: for now, we treat it as constant
-        xr          % reference state trajectory
-        ur          % reference input trajectory
-        xNr         % reference terminal state
-        zr          % The reference stack variable, have size (nx+nu)*N
+        % RRLB related 
+        wx          % weight for RRLB on state. 
+        delta_b     % The tolerance in the relaxed log barrier. If x < delta_b, then the function becomes a quadratic function.
+        rho_b       % The weight for the relaxed log barrier function. The final stage cost is L(x,u) = l(x,u) + rho_b * bx(x)
+        xi_Q        % The weight for the DeltaQ in 
 
-        % State and input constraints
-        dmin        % dmin <= C*x + Du <= dmax
-        dmax
-        umin        % umin <= u[k] <= umax
-        umax
-        z           % The stacked variable [x;u]
-        zmin
-        zmax
 
         % the dimentions
         nx
@@ -76,7 +67,7 @@ classdef RRLBMPC
         maxiter     % the maximum iteration
         N           % the time horizon
         gamma       % the rescale factor
-        isFirst     % the flag to indicate that if this object has ben used. For the first time, we run a large number of itertions in aladin to initilize the peMPC.
+        isFirst     % the flag to indicate that if this object has ben used. For the first time, we run a large number of itertions in aladin to initilize the MPC controller.
 
         % the stored variable
         lam         % the Lagrangian multiplier
@@ -116,6 +107,31 @@ classdef RRLBMPC
         cons_mul    % constraint multipiler to shrink the constraints and avoid constraint violation
         use_parallel % a flag to choose if we want to use parallelism or not.
         parallel_threshold % if the time horizon larger than this threshold, then enable the parallel computing.
+
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % Below are deprecated properties %
+        %%%
+        
+        % State and input constraints
+        dmin        % dmin <= C*x + Du <= dmax
+        dmax
+        umin        % umin <= u[k] <= umax
+        umax
+        z           % The stacked variable [x;u]
+        zmin
+        zmax
+
+        % The converted system dynamics---in case we have a different system format
+        % G[k+1]z[k+1] = H[k]z[k] + h[k]
+        % where z[0] = u[0]; z[k] = [x[k]; u[k]]; z[N] = x[N]
+        % GN
+        Gk
+        NGkt        % kron(eye(N-1),Gk')
+        GN
+        Hk
+        NHkt        % kron(eye(N-1),Hk')
+        H0
 
     end % End of the properties
 
@@ -203,25 +219,7 @@ classdef RRLBMPC
             obj.parallel_threshold = p.Results.par_threshold;
         end
 
-        function obj = getGH(obj)
-            % convert the system dynamics to G and H
-            nx = obj.nx;
-            nu = obj.nu;
-            A = obj.A; B = obj.B;
-            obj.H0 = [B];
-            obj.Hk = [A,B];
-            obj.Gk = [eye(nx), zeros(nx,nu)];
-            obj.GN = eye(nx); % TODO: inconsistent with the paper
-            % the constraint for the augmented variable
-            obj.NGkt = kron(speye(obj.N-1),obj.Gk');
-            obj.NHkt = kron(speye(obj.N-1),obj.Hk');
-            obj.zmin = [obj.dmin; obj.umin];
-            obj.zmax = [obj.dmax; obj.umax];
-        end
 
-        function obj = getGamma(obj)
-            % TODO
-        end
 
         function obj = getMaxIter(obj, varargin)
             % Function "getMaxIter" evaluates minimum necessary iterations
