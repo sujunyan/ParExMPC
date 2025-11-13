@@ -40,3 +40,6 @@ octave-workspace
 @peMPC/c_code/MPC_problem.h
 @peMPC/c_code/mpQP_data.h
 
+*_old.m
+.DS_Store
+

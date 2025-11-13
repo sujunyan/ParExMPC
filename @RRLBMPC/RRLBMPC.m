@@ -54,19 +54,19 @@ classdef RRLBMPC
 
         % RRLB related 
         wx          % weight for RRLB on state. 
-        delta_b     % The tolerance in the relaxed log barrier. If x < delta_b, then the function becomes a quadratic function.
-        rho_b       % The weight for the relaxed log barrier function. The final stage cost is L(x,u) = l(x,u) + rho_b * bx(x)
-        xi_Q        % The weight for the DeltaQ in 
+        delta_relax     % The tolerance in the relaxed log barrier. If x < delta_relax, then the function becomes a quadratic function.
+        rho         % The weight for the relaxed log barrier function. The final stage cost is L(x,u) = l(x,u) + rho * bx(x)
 
 
         % the dimentions
         nx
         nu
+        mx  % number of state constraints
+        mu  % number of input constraints
 
         % controller parameters
         maxiter     % the maximum iteration
         N           % the time horizon
-        gamma       % the rescale factor
         isFirst     % the flag to indicate that if this object has ben used. For the first time, we run a large number of itertions in aladin to initilize the MPC controller.
 
         % the stored variable
@@ -108,6 +108,21 @@ classdef RRLBMPC
         use_parallel % a flag to choose if we want to use parallelism or not.
         parallel_threshold % if the time horizon larger than this threshold, then enable the parallel computing.
 
+        % the stack variables in the condensed form
+        compactA
+        compactb
+        compactQ
+        compactR
+
+        z1          % the stacked variable for states
+        z2          % the stacked variable for control inputs
+
+        % ALADIN related properties -----------------------
+
+        % ADMM related properties (for comparison only) ------------------------------
+        ADMM_sigma   % the penalty parameter in ADMM
+
+
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % Below are deprecated properties %
@@ -144,7 +159,7 @@ classdef RRLBMPC
             out = all(d > tol);
         end
 
-        function obj = peMPC(A,B,Q,R,P,varargin)
+        function obj = RRLBMPC(A,B,Q,R,P,varargin)
             % The constructor of the peMPC
             % get from a problem object
             % input:
@@ -157,8 +172,8 @@ classdef RRLBMPC
             %   xr: the reference state
             %   xNr: the reference terminal state
             %   ur: the reference control input
-            %   xmin,xmax: the state contraint
-            %   umin,umax: the control input contraint
+            %   Cx, dx: the constraint Cx * x[k] <= dx
+            %   Cu, du: the constraint Cu * u[k] <= du
             %   N: the time horizon
             %   cons_mul: the contraint multipiler, often set less than 1 to avoid contraint violation
             %   par_flag: the boolean flag to enable/disable the parallism
@@ -188,183 +203,163 @@ classdef RRLBMPC
             addOptional(p,'xr',zeros(obj.nx,1));
             addOptional(p,'xNr',zeros(obj.nx,1));
             addOptional(p,'ur',zeros(obj.nu,1));
-            addOptional(p,'C',eye(obj.nx));
-            addOptional(p,'D',zeros(obj.nx,obj.nu));
-            addOptional(p,'dmin',-inf*ones(obj.nx,1));
-            addOptional(p,'dmax',inf*ones(obj.nx,1));
-            addOptional(p,'umin',-inf*ones(obj.nu,1));
-            addOptional(p,'umax',inf*ones(obj.nu,1));
+
+            addOptional(p,'Cx',eye(obj.nx)); addOptional(p,'dx',zeros(obj.nx,obj.nu));
+            addOptional(p,'Cu',eye(obj.nx)); addOptional(p,'du',zeros(obj.nx,obj.nu));
+
+            addOptional(p,'rho', 1e-4);
+
+
             addOptional(p,'N',10);
             addOptional(p,'cons_mul',1);
             addOptional(p,'mptSolver','plcp');
             addOptional(p,'par_flag', true);
             addOptional(p,'par_threshold', 20);
 
+            addOptional(p,'ADMM_sigma', 1.0);
+
             parse(p,varargin{:});
             obj.xr = p.Results.xr;
             obj.xNr = p.Results.xNr;
             obj.ur = p.Results.ur;
-            obj.C = p.Results.C;
-            obj.D = p.Results.D;
-            obj.umin = p.Results.umin;
-            obj.umax = p.Results.umax;
-            obj.dmin = p.Results.dmin;
-            obj.dmax = p.Results.dmax;
+
+            obj.Cx = p.Results.Cx; obj.dx = p.Results.dx;
+            obj.mx = size(obj.Cx,1);
+            obj.Cu = p.Results.Cu; obj.du = p.Results.du;
+            obj.mu = size(obj.Cu,1);
+           
+            obj.ADMM_sigma = p.Results.ADMM_sigma;
+
             obj.N = p.Results.N;
             obj.cons_mul = p.Results.cons_mul;
-            obj.dmin = obj.dmin * obj.cons_mul;
-            obj.dmax = obj.dmax * obj.cons_mul;
+            obj.rho = p.Results.rho;
+
+            % obj.dmin = obj.dmin * obj.cons_mul;
+            % obj.dmax = obj.dmax * obj.cons_mul;
             obj.mptSolver = p.Results.mptSolver;
             obj.use_parallel = p.Results.par_flag;
             obj.parallel_threshold = p.Results.par_threshold;
+
+
+        end
+
+        function obj = getWx(obj)
+            % Get the weight vector for RRLB
+            % We want to solve the following simple QP
+            % min_w  ||w - 1||_2^2
+            % s.t. \sum_r w_r * a_r == 0
+            % here a_r is the derivative of the r-th constraint at the point zero.
+
+            a_vec = zeros(obj.mx)
+            delta = obj.delta_relax
+            for r = 1:obj.mx
+                % get the derivative of the r-th constraint at zero
+                dr_i = obj.dx(r)
+                if dr_i > delta
+                    ai = - 1 / dr_i;
+                else
+                    ai = (dr_i - 2*delta) / delta;
+                end
+                a_vec(r) = ai;
+            end
+
+            % By solving the KKT condition, we have
+            lam_tmp = 2 * sum(a_vec) / (a_vec' * a_vec);
+            
+            obj.wx = 1 - 0.5 * lam_tmp * a_vec;
+
+
+
         end
 
 
+        function obj = getCompactForm(obj)
+            % Get the compact form for the problem
+            % This is mainly used for verification
+            % Minimize f1(z1) + f2(z2)
+            %   s.t. z1 = A z2 + b
+            
+            obj.compactA = kron(eye(obj.N), [obj.A, obj.B]);
+            obj.compactb = zeros(obj.N * obj.nx, 1);
 
-        function obj = getMaxIter(obj, varargin)
-            % Function "getMaxIter" evaluates minimum necessary iterations
-            % for the stability guarantees (m_bar)
-            %
-            % obj = getMaxIter(obj, kappa, gamma, sigma, eta, tau)
-            % 
-            % maxiter = 2*log( 2*eta*gamma*sqrt( sigma*(1 + kappa) / kappa )+...
-            %                  2*tau*sigma*gamma^2*( 1 + kappa ) / kappa ) / log( 1 / kappa ); 
-            %
-            % where:
-            %
-            % kappa < 1
-            %
-            % || u_opt ||_2 < gamma * || x_0 ||_Q
-            %
-            % || V(x+_0) - V(x_1) || < eta_bar * || x+_0 - x_1 ||_2 + tau_bar * || x+_0 - x_1 ||^2_2
-            % eta = eta_bar * SQRT( max_eigenvalue( BETA^T * B^T * B * BETA ) )
-            % tau = 0.5 * tau_bar * max_eigenvalue( BETA^T * B^T * B *BETA ) 
-            % BETA = [ I, 0, ..., 0]
+            obj.compactQ = blkdiag(kron(speye(obj.N-1), obj.Q), obj.P);
+            obj.compactR = kron(speye(obj.N), obj.R);
             
+        end
+
+        function res = getZ1k(obj, z1, k)
+            % get the z1_k from the stacked variable z1
+            res = z1((k-1)*(obj.nx)+1 : (k-1)*(obj.nx)+obj.nx);
+        end
+
+        function res = getZ2k(obj, z2, k)
+            % get the z2_k from the stacked variable z2
+            res = z2((k-1)*(obj.nu)+1 : (k-1)*(obj.nu)+obj.nu);
+        end
+      
+        function res = f1(obj, z1)
+            res = z1' * obj.compactQ * z1;
+
+            for k = 1:obj.N-1
+                z1_k = getZ1k(obj, z1, k);
+                res0 = rho * RRLB(obj.delta_relax, obj.rho, obj.wx, obj.Cx, obj.dx, z1_k);
+                res += res0
+            end
+
+        end
+
+        function res = f1_ADMM(obj, z1, z2, lam, sigma)
+             % The objective of the first subproblem in ADMM
+             res = f1(obj, z1) + lam' * z1  + ( sigma / 2 ) * norm( z1 - obj.compactA * z2 - obj.compactb )^2;
+        end
+
+        function res = f2_ADMM(obj, z1, z2, lam, sigma)
+            % The objective of the second subproblem in ADMM
+            res = f2_no_cons(obj, z2) - (obj.compactA * z2)' * lam 
+            res += ( sigma / 2 ) * norm( z1 - obj.compactA * z2 - obj.compactb)^2;
+        end
+
+        function res = f2_no_cons(obj, z2)
+            res = z2' * obj.compactR * z2;
+        end
+
+        function [z1_next, z2_next, lam_next, u0] = ADMM_one_iteration(obj, z1, z2, lam)
+            sigma = 1
+
+            % Solve the first subproblem of ADMM
             
-            % CDC 2023 formulation:
-            % kappa < 1
-            %
-            % || u_opt ||_2 < gamma * || x_0 ||_Q
-            %
-            % || V(x+_0) - V(x_1) || < eta_bar_1 * || x+_0 - x_1 ||_2 + eta_bar_2 * || x+_0 - x_1 ||^2_2
-            % eta_1 = eta_bar_1 * SQRT( max_eigenvalue( BETA^T * B^T * B * BETA ) )
-            % eta_2 = 0.5 * eta_bar_2 * max_eigenvalue( BETA^T * B^T * B *BETA ) 
-            % BETA = [ I, 0, ..., 0]
-             
-            if isempty(varargin)
-                obj.maxiter = 5; % Default value
+            z1_next = fminsearch(@(z1_var) f1_ADMM(obj, z1_var, z2, lam, sigma), z1);
+
+            z2_next = fmincon(@(z2_var) f2_ADMM(obj, z1_next, z2_var, lam, sigma), z2, obj.Cu, obj.du);
+
+
+            lam_next = lam + sigma * ( z1_next - obj.compactA * z2_next - obj.compactb );
+
+            u0 = getZ2k(obj, z2_next, 1);
+
+        end
+
+
+        % Other help methods go here ----------------------------------------
+
+        function res = relax_barrier(delta, x)
+            % The relaxed log barrier function
+            res = 0;
+            if x >= delta
+                res = -log(x);
             else
-                % Input parser
-                p = inputParser;
-                addOptional(p,'kappa',-Inf);
-                addOptional(p,'gamma',-Inf);
-                addOptional(p,'sigma',-Inf);
-                addOptional(p,'eta',-Inf);
-                addOptional(p,'tau',-Inf);
-                parse(p,varargin{:});
-                % Extract variables
-                kappa   = p.Results.kappa;
-                gamma   = p.Results.gamma;
-                sigma   = p.Results.sigma;
-                eta     = p.Results.eta;
-                tau     = p.Results.tau;
-                % evaluation of MAXITER
-                obj.maxiter = 2*log( 2*eta*gamma*sqrt( sigma*(1 + kappa) / kappa )+...
-                              2*tau*sigma*gamma^2*( 1 + kappa ) / kappa ) / log( 1 / kappa );
+                res = 0.5 * (( (x - 2*delta)/delta)^2 - 1) - log(delta);
             end
+
         end
 
-        function obj = getLargeQP(obj)
-            % Get the QP paramters for large QP problems
-            % This is for other algorithms to use
-            obj.dmin = obj.dmin / obj.cons_mul; % goes back to true bound
-            obj.dmax = obj.dmax / obj.cons_mul; % goes back to true bound
-            obj.QP_H = 2*blkdiag(obj.R, kron(speye(obj.N-1),blkdiag(obj.Q,obj.R)), obj.P);
-            qxu = [obj.Q*obj.xr;obj.R*obj.ur];
-            obj.QP_g = -2*[obj.R*obj.ur; kron(ones(obj.N-1,1),qxu); obj.P*obj.xNr];
-            % construction of equality contraint ------------------------------
-            nx = obj.nx; nu = obj.nu; N = obj.N;
-            KKT_con = zeros(nx*N,(nx+nu)*N);
-            KKT_con(1:nx,1:nu+(nx+nu)) = [obj.H0,-obj.Gk]; % TODO: might be wrong
-            for kk = 1:N-2
-                KKT_con((nx)*kk+1:(nx)*(kk+1), nu+(nx+nu)*(kk-1)+1:nu+(nx+nu)*(kk+1)  ) = [obj.Hk,-obj.Gk];
+        function res = RRLB(delta, rho, wx, Cx, dx, x)
+            % The relaxed recentered log barrier (RRLB) function
+            res = 0
+            for r = 1:obj.mx
+                res += rho * wx(r) * (relax_barrier(delta, dx(r) - Cx(r,:) * x) - relax_barrier(delta, dx(r)));
             end
-            kk = N-1;
-            KKT_con((nx)*kk+1:(nx)*(kk+1), nu+(nx+nu)*(kk-1)+1:nu+(nx+nu)*kk + nx ) = [obj.Hk,-obj.GN];
-            Aeq = KKT_con;
-            leq = zeros((obj.nx)*(obj.N),1);
-            ueq = zeros((obj.nx)*(obj.N),1);
-            % construction of inequality constraint --------------------------------
-            % Aineq = speye(obj.N *(obj.nx + obj.nu));
-            Aineq_small = [obj.C, obj.D ; zeros(obj.nu,obj.nx), eye(obj.nu)];
-            Aineq = blkdiag(eye(obj.nu),kron(speye(obj.N-1),Aineq_small), obj.C ); % TODO
-            lineq = [obj.umin; repmat([obj.dmin;obj.umin], obj.N-1, 1); obj.dmin];
-            uineq = [obj.umax; repmat([obj.dmax;obj.umax], obj.N-1, 1); obj.dmax];
-            obj.QP_A = [Aeq; Aineq];
-            obj.QP_l = [leq; lineq];
-            obj.QP_u = [ueq; uineq];
-
-            obj.dmin = obj.dmin * obj.cons_mul; % goes back to shrinked bound
-            obj.dmax = obj.dmax * obj.cons_mul; % goes back to shrinked bound
         end
-
-        %function obj = preCQP(obj)
-        %    % pre-compute the KKT matrix
-        %    % min 1/2 x'Qx + q'x; s.t. Ax=b | lam and the corresponding KKT matrix is given by
-        %    % [Q,A'; * [x;   = [-q;
-        %    %  A,0]     lam]    b]
-        %    % The KKT matrix is given by
-        %    % KKT = [Q,A';Q,0]
-        %    % KKT_obj = Q
-        %    tic;
-        %    R = obj.R; Q = obj.C'*obj.Q*obj.C; P = obj.P;
-        %    nx = obj.nx; nu = obj.nu; N=obj.N;
-        %    KKT_obj = 2*blkdiag(blkdiag(R),kron(eye(N-1),blkdiag(Q,R)),P);
-        %    KKT_con = zeros(nx*N,(nx+nu)*N);
-        %    KKT_con(1:nx,1:nu+(nx+nu)) = [obj.H0,-obj.Gk]; % TODO: might be wrong
-        %    for kk = 1:N-2
-        %        KKT_con((nx)*kk+1:(nx)*(kk+1), nu+(nx+nu)*(kk-1)+1:nu+(nx+nu)*(kk+1)  ) = [obj.Hk,-obj.Gk];
-        %    end
-        %    kk = N-1;
-        %    KKT_con((nx)*kk+1:(nx)*(kk+1), nu+(nx+nu)*(kk-1)+1:nu+(nx+nu)*kk + nx ) = [obj.Hk,-obj.GN];
-
-        %    obj.KKT_con = KKT_con;
-        %    obj.KKT = [KKT_obj KKT_con';KKT_con zeros(size(KKT_con,1))];
-        %    obj.KKT_obj = sparse(KKT_obj);
-        %    obj.KKT = sparse(obj.KKT);
-        %    obj.dKKT = decomposition(obj.KKT);
-        %    fprintf("precomputed KKT matrix for coupled QP with %f seconds\n",toc);
-        %end
-
-        %function obj = solveCoupleUpdate(obj,x0)
-        %    % Solve the coupled QP problem of the following form
-        %    % and update the primal and dual variable
-        %    % min 1/2 x'Qx + q'x; s.t. Ax=b | lam and the corresponding KKT matrix is given by
-        %    % [Q,A'; * [x;   = [-q;
-        %    %  A,0]     lam]    b]
-        %    ny = obj.nu+obj.nx;
-        %    xi_v = vertcat(obj.xi{:}); % the vectorized xi
-        %    z_v = vertcat(obj.z{:});
-        %    [del_lam,primal] = pempc_solve_couple_mex(xi_v,z_v,x0);
-        %    %tmp = 2*xi_v - y_v; %+ obj.yr; % TODO
-        %    %obj.KKT_res = [obj.KKT_obj*tmp;obj.KKT_con_res];
-        %    %sol_cQP = obj.dKKT\obj.KKT_res;
-        %    %primal = sol_cQP(1:ny*obj.N);
-        %    %del_lam  = sol_cQP(ny*obj.N+1:end);
-        %    %obj.z{1} = primal(1:obj.nu);
-        %    obj.z{obj.N+1} = primal(end-obj.nx+1:end);
-        %    for kk = 1:obj.N
-        %        istart = (kk-1)*(ny)+1;
-        %        obj.z{kk} = primal(istart:istart+ny-1);
-        %    end
-        %    nxz = obj.nx;
-        %    for kk = 1:obj.N+1
-        %        istart = (kk-1)*(nxz)+1;
-        %        obj.del_lam{kk} = del_lam(istart:istart+nxz-1);
-        %        obj.lam{kk} = obj.lam{kk} + obj.del_lam{kk};
-        %    end
-        %end
 
     end % end of public method
 end
