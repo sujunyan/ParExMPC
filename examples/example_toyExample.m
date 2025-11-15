@@ -27,7 +27,7 @@ function problem = example_toyExample
     problem.info.name = "toyExample";
 
     % Add for RRLB MPC -------------------
-    problem.Cx = [eye(2); -eye(2)];  problem.dx = [11; 11; -11; -11];
-    problem.Cu = [eye(1); -eye(1)];  problem.du = [5; -5];
+    problem.Cx = [eye(2); -eye(2)];  problem.dx = [10; 10; 10; 10];
+    problem.Cu = [eye(1); -eye(1)];  problem.du = [5; 5];
 
 end

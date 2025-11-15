@@ -16,3 +16,14 @@ function obj = init(obj)
     % obj.lam = zeros((obj.N+1)*obj.nx,1);
    
 end
+
+function obj = getHmatrix(obj)
+    % get the H1 and H2 matrices for the ALADIN method
+    Q_bar = obj.Q;
+
+    obj.ALADIN_H1 = kron(eye(obj.N), Q_bar);
+    obj.ALADIN_H2 = kron(eye(obj.N), obj.R);
+
+    
+
+end

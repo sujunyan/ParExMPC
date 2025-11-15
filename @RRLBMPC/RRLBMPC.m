@@ -118,6 +118,8 @@ classdef RRLBMPC
         % z2          % the stacked variable for control inputs
 
         % ALADIN related properties -----------------------
+        ALADIN_H1
+        ALADIN_H2
 
         % ADMM related properties (for comparison only) ------------------------------
         ADMM_sigma   % the penalty parameter in ADMM
@@ -360,42 +362,11 @@ classdef RRLBMPC
 
         end
 
-        function res = f1_ADMM(obj, z1, z2, lam, sigma)
-             % The objective of the first subproblem in ADMM
-             a1 = f1(obj, z1);
-             a2 = lam' * z1;
-             a3 = ( sigma / 2 ) * norm( z1 - obj.compactA * z2 - obj.compactb )^2;
-             res = a1 + a2 + a3;
-        end
-
-        function res = f2_ADMM(obj, z1, z2, lam, sigma)
-            % The objective of the second subproblem in ADMM
-            res = f2_no_cons(obj, z2) - (obj.compactA * z2)' * lam;
-            res = res + ( sigma / 2 ) * norm( z1 - obj.compactA * z2 - obj.compactb)^2;
-        end
 
         function res = f2_no_cons(obj, z2)
             res = z2' * obj.compactR * z2;
         end
-
-        function [z1_next, z2_next, lam_next, u0] = ADMM_one_iteration(obj, z1, z2, lam)
-            sigma = 1;
-
-            % Solve the first subproblem of ADMM
-            
-            z1_next = fminsearch(@(z1_var) f1_ADMM(obj, z1_var, z2, lam, sigma), z1);
-
-            C = kron(speye(obj.N), obj.Cu);
-            d = kron(ones(obj.N,1), obj.du);
-            z2_next = fmincon(@(z2_var) f2_ADMM(obj, z1_next, z2_var, lam, sigma), z2, C, d);
-
-
-            lam_next = lam + sigma * ( z1_next - obj.compactA * z2_next - obj.compactb );
-
-            u0 = getZ2k(obj, z2_next, 1);
-
-        end
-
+        
 
         % Other help methods go here ----------------------------------------
 
