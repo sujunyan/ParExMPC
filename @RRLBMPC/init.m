@@ -12,6 +12,7 @@ function obj = init(obj)
     obj.Q = obj.Q + tol*eye(size(obj.Q));
     obj.P = obj.P + tol*eye(size(obj.P));
 
-    obj.lam = zeros((obj.N+1)*obj.nx,1);
+    obj = obj.getCompactForm;
+    % obj.lam = zeros((obj.N+1)*obj.nx,1);
    
 end
