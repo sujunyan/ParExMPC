@@ -14,12 +14,17 @@ function obj = init(obj)
 
     obj = obj.getCompactForm;
     % obj.lam = zeros((obj.N+1)*obj.nx,1);
+    obj = obj.getHmatrix;
    
 end
 
 function obj = getHmatrix(obj)
     % get the H1 and H2 matrices for the ALADIN method
     Q_bar = obj.Q;
+    % The Hessian matrix of the function b_tilde
+    Hessian_b = diag(obj.Wx) / obj.delta_relax;
+    
+    Q_bar = Q_bar + obj.rho * Hessian_b;
 
     obj.ALADIN_H1 = kron(eye(obj.N), Q_bar);
     obj.ALADIN_H2 = kron(eye(obj.N), obj.R);
