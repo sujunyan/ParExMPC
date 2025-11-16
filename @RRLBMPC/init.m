@@ -14,7 +14,8 @@ function obj = init(obj)
 
     obj = obj.getCompactForm;
     % obj.lam = zeros((obj.N+1)*obj.nx,1);
-    obj = obj.getHmatrix;
+    % obj = obj.getHmatrix;
+    obj = getHmatrix(obj);
    
 end
 
@@ -22,7 +23,15 @@ function obj = getHmatrix(obj)
     % get the H1 and H2 matrices for the ALADIN method
     Q_bar = obj.Q;
     % The Hessian matrix of the function b_tilde
-    Hessian_b = diag(obj.Wx) / obj.delta_relax;
+    % Hessian_b = diag(obj.wx) / obj.delta_relax;
+    Hessian_b = zeros(obj.nx, obj.nx);
+    for r = 1:obj.mx
+        Cr = obj.Cx(r,:);
+        dr = obj.dx(r);
+        wr = obj.wx(r);
+        H_tmp = Cr * Cr' * obj.relax_barrier_d2(obj.delta_relax, dr);
+        Hessian_b = Hessian_b + H_tmp * wr * obj.rho;
+    end
     
     Q_bar = Q_bar + obj.rho * Hessian_b;
 

@@ -218,7 +218,7 @@ classdef RRLBMPC
             addOptional(p,'par_flag', true);
             addOptional(p,'par_threshold', 20);
 
-            addOptional(p,'delta_relax', 1e-2);
+            addOptional(p,'delta', 1e-2);
             addOptional(p,'ADMM_sigma', 1.0);
 
             parse(p,varargin{:});
@@ -232,7 +232,7 @@ classdef RRLBMPC
             obj.mu = size(obj.Cu,1);
            
             obj.ADMM_sigma = p.Results.ADMM_sigma;
-            obj.delta_relax = p.Results.delta_relax;
+            obj.delta_relax = p.Results.delta;
 
             obj.N = p.Results.N;
             obj.cons_mul = p.Results.cons_mul;
@@ -378,7 +378,16 @@ classdef RRLBMPC
             else
                 res = 0.5 * (( (x - 2*delta)/delta)^2 - 1) - log(delta);
             end
+        end
 
+        function res = relax_barrier_d2(obj, delta, x)
+            % The second derivative of the relaxed log barrier function
+            res = 0;
+            if x >= delta
+                res = 1 / (x^2);
+            else
+                res = 1 / (delta^2);
+            end
         end
 
         function res = RRLB(obj, delta, rho, wx, Cx, dx, x)
@@ -387,9 +396,10 @@ classdef RRLBMPC
             for r = 1:obj.mx
                 rlb1 = relax_barrier(obj, delta, dx(r) - Cx(r,:) * x);
                 rlb0 = relax_barrier(obj, delta, dx(r));
-                res = res + rho * wx(r) * (rlb1 - rlb0); ;
+                res = res + rho * wx(r) * (rlb1 - rlb0);
             end
         end
+
 
     end % end of public method
 end
