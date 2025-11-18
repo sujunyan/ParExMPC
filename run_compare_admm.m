@@ -8,102 +8,65 @@ addpath("@RRLBMPC");
 
 % caseName = 'helicopter'; 
 caseName = 'toyExample'; 
-% caseName = 'robotArm'; 
+caseName = 'robotArm'; 
 cons_mul = 1;      % constraint multiplier
-switch caseName
-    case 'toyExample'
-        prob = example_toyExample;
-        % prob.ni = 30;
-        mpc0 = RRLBMPC(prob.A,prob.B,prob.Q,prob.R,prob.P,...
-                    'Cx',prob.Cx, 'dx', prob.dx, 'Cu', prob.Cu, 'du', prob.du, ...
-                    'ADMM_sigma', 5e-1, 'N', prob.ni, 'delta', 1e-2, 'rho', 1e-6);
-                    % 'umax',prob.umax,'N',prob.ni,'cons_mul',cons_mul, 'par_flag', true, 'par_threshold', 20);
-    case 'robotArm'
-        prob = example_robotArm;
-        mpc0 = RRLBMPC(prob.A,prob.B,prob.Q,prob.R,prob.P,...
-                    'Cx',prob.Cx, 'dx', prob.dx, 'Cu', prob.Cu, 'du', prob.du, ...
-                    'ADMM_sigma', 5e-1, 'N', prob.ni);
-end
-mpc0 = mpc0.init; 
+prob = feval(['example_', caseName]);
 
+mpc0 = RRLBMPC(prob.A,prob.B,prob.Q,prob.R,prob.P,...
+            'Cx',prob.Cx, 'dx', prob.dx, 'Cu', prob.Cu, 'du', prob.du, ...
+            'ADMM_sigma', 5e-1, 'N', prob.ni, 'delta', 1e-2, 'rho', 1e-6);
+mpc0 = mpc0.init; 
 x0 = prob.x0;
-%mpc0.N = 20;
 mpc0.maxiter = 10;
 tol = 1e-4;
+nx = mpc0.nx; nu = mpc0.nu; N = mpc0.N;
 
 %% Simulate in closed loop -----------------------------
-nsim = 100;
+nsim = 20;
 res_dict = {};
-nx = mpc0.nx; nu = mpc0.nu; N = mpc0.N;
 
 % 
 sim_tol = 1e-4;
 % method_vec = ["ALADIN"];
-% method_vec = ["ADMM"];
-method_vec = ["ADMM", "ALADIN"];
+% method_vec = ["fmincon", "ALADINiter5", "ADMMiter5",  "ADMMiter20", "ADMMiter50" ];
+method_vec = ["fmincon", ];
+% method_vec = ["fmincon"];
+% method_vec = ["ADMM", "ALADIN"];
 % for method = ["ADMM"] %"ALADIN"]
-for method = method_vec
-    fprintf("Simulation for method: %s \n", method);
-    x_vec = [prob.x0];
-    u0_vec = [];
-    J_vec = [0];
-    
-    time = 0; % time used by QP solver
-    for i = 1:nsim
-        fprintf(" Simulation: %d/%d \n", i, nsim);
-        x0 =  x_vec(:,end);
-        mpc0 = mpc0.updateX0(x0);
-        max_iter = 5;
-        if i == 1
-            % z1 = zeros(nx * N, 1);
-            z1 = kron(ones(N,1), x0);
-            z2 = zeros(nu * N, 1);
-            lam = zeros(nx * N, 1);
-            max_iter = 100;
-        end
-        tic;
-        if method == "ADMM"
-            [z1, z2, lam, u0] = mpc0.ADMM_solve(z1, z2, lam, max_iter);
-        elseif method == "ALADIN"
-            [z1, z2, lam, u0] = mpc0.ALADIN_solve(z1, z2, lam, max_iter);
-        end
-        elapsed = toc;
-        time = time + elapsed;
-        xn = mpc0.A*x0 + mpc0.B*u0;
-        xn_sim = z1(1:nx);
-        xn ;
-        z2 ;
-        
-        
-        x_vec = [x_vec, xn];
-        u0_vec = [u0_vec, u0];
-        Jn = J_vec(end) + x0'*mpc0.Q*x0 + u0'*mpc0.R*u0;
-        J_vec = [J_vec, Jn];
-        if norm(xn - x0, Inf) < sim_tol
-            fprintf(" Converged at step %d \n", i);
-            break;
-        end
-        
+for method_str = method_vec
+    if method_str ~= "fmincon"
+        parts = strsplit(method_str, 'iter');
+        method = parts{1};
+        max_iter0 = str2num(parts{2});
+    else
+        method = method_str;
+        max_iter0 = 0;
     end
-    res_dict.(method) = struct("x_vec", x_vec, "J_vec", J_vec, "time", time, "u0_vec", u0_vec, "isim", i);
+    
+    fprintf("Simulation for method: %s \n", method_str);
+    res = simulate_one(mpc0, nsim, sim_tol, method, max_iter0, prob.x0); 
+
+    res_dict.(method_str) = res;
 end
 
 for method = method_vec
-    fprintf("Method: %s, Total time: %.2f seconds with isim=%d\n", method, res_dict.(method).time, res_dict.(method).isim);
+    fprintf("Method: %s, Total time: %.2f seconds with isim=%d\n", method, res_dict.(method).time, res_dict.(method).isim_stop);
 end
 
 % Report the results
 
 % Plot state trajectories
 figure(1);
+lw = 4.0;
 for method = method_vec
     x_vec = res_dict.(method).x_vec;
     nx = size(x_vec, 1); 
     tspan = 0:(size(x_vec, 2) - 1);
+    lw = lw - 0.4;
     for kk = 1:nx
         subplot(nx, 1, kk);
         hold on;
-        plot(tspan, x_vec(kk, :), 'LineWidth', 1.5, 'DisplayName', method);
+        plot(tspan, x_vec(kk, :), 'LineWidth', lw, 'DisplayName', method);
         title(sprintf("State x_%d Trajectory", kk));
         xlabel("Time Step");
         ylabel(sprintf("x_%d", kk));
@@ -116,10 +79,12 @@ hold off;
 % Plot running cost
 figure(2);
 hold on
+lw = 4.0;
 for method = method_vec
+    lw = lw - 0.4;
     J_vec = res_dict.(method).J_vec;
     tspan = 0:(length(J_vec) - 1);
-    plot(tspan, J_vec, 'LineWidth', 1.5, 'DisplayName', method);
+    plot(tspan, J_vec, 'LineWidth', lw, 'DisplayName', method);
     title("Running Cost J");
     xlabel("Time Step");
     ylabel("Cost");

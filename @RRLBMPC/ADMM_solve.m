@@ -4,6 +4,7 @@
 
     for iter = 1:maxiter
         [z1_next, z2_next, lam_next, u0] = ADMM_one_iteration(obj, z1, z2, lam);
+        % fprintf("ADMM iteration %d completed. z1 error %.2f z2 error %.2f lam_diff %.2f \n", iter, norm(z1-z1_next), norm(z2 - z2_next), norm(lam - lam_next));
         z1 = z1_next;
         z2 = z2_next;
         lam = lam_next;
