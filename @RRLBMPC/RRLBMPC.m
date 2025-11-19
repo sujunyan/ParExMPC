@@ -353,12 +353,16 @@ classdef RRLBMPC
         function res = f1(obj, z1)
             res = z1' * obj.compactQ * z1;
             delta = obj.delta_relax;
+            rrlb_cost = 0;
             for k = 1:obj.N-1
                 z1_k = getZ1k(obj, z1, k);
 
                 rrlb = RRLB(obj, delta, obj.rho, obj.wx, obj.Cx, obj.dx, z1_k);
-                res = res + rrlb;
+                rrlb_cost = rrlb_cost + rrlb;
             end
+
+            res = res + rrlb_cost;
+            fprintf("RRLB contribution to cost: %.4f \n", rrlb_cost);
 
         end
 

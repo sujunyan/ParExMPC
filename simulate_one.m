@@ -26,6 +26,8 @@ function res = simulate_one(mpc0, nsim, sim_tol, method, max_iter0, x0)
             [z1, z2, lam, u0] = mpc0.ALADIN_solve(z1, z2, lam, max_iter);
         elseif method == "fmincon"
             [z1, z2, u0] = mpc0.fmincon_solve(z1, z2);
+        elseif method == "quadprog"
+            [z1, z2, u0] = mpc0.quadprog_state_solve(z1, z2);
         end
         elapsed = toc;
         time = time + elapsed;

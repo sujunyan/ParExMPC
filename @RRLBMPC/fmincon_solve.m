@@ -12,7 +12,9 @@ function [z1_next, z2_next, u0] = fmincon_solve(obj, z1, z2)
     A = [zeros(nx*N, mu*N) , kron(speye(obj.N), obj.Cu)];
     b = kron(ones(obj.N,1), obj.du);
 
-    z = fmincon(@(z_var) fmincon_func(obj, z_var), z0, A, b, Aeq, beq, [], [], [], options);
+    [z, fval] = fmincon(@(z_var) fmincon_func(obj, z_var), z0, A, b, Aeq, beq, [], [], [], options);
+
+    fprintf("fmincon solved cost: %.4f \n", fval);
 
     z1_next = z(1:obj.nx * obj.N);
     z2_next = z(obj.nx * obj.N + 1:end);

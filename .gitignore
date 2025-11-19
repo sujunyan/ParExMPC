@@ -42,4 +42,5 @@ octave-workspace
 
 *_old.m
 .DS_Store
+*.png
 
